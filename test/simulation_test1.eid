@@ -1,0 +1,113 @@
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////
+/////////////////////////////////////////
+// set up a simple simulation
+
+initialize()
+
+{
+// set the overall mutation rate
+initializeMutationRate(1e-7);
+
+
+///////////////////////////////////////// DIFFERENT MUTATIONS AVAILABLE
+// m1 mutation type: neutral
+initializeMutationType("m1", 0.5, "f", 0.0);
+
+// m2 mutation type: neutral
+initializeMutationType("m2", 0.5, "f", 0.0);
+
+// m3 mutation type: neutral
+initializeMutationType("m3", 0.5, "f", 0.001);
+
+
+
+///////////////////////////////////////// GENOMIC ELEMENTS OF CHROMOSOME
+
+// g1 genomic element type: uses m1,m2,m3
+initializeGenomicElementType("g1", c(m1,m2,m3), c(0.4,0.5,0.1));
+
+//g2 genomic element type: uses only m3 for all mutations
+initializeGenomicElementType("g2", m3, 1.0);
+
+
+
+//////////////////////////////////////// CONTSTRUCTION OF CHROMOSOME
+////// STRUCTURE
+// uniform chromosome of length 100 kb
+initializeGenomicElement(g1, 0, 99999);
+initializeGenomicElement(g2, 100000, 199999);
+initializeGenomicElement(g1, 200000, 299999);
+
+
+
+/// RECOMB
+// uniform recombination along the chromosome
+initializeRecombinationRate(1e-8);
+
+
+
+//you can set all sorts of parameters here
+//X=10;
+//you can also print stuff here like this
+//print(X);
+
+
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////   SIMULATION BEGINS
+
+// create a population of 500 individuals
+
+1
+{
+sim.addSubpop("p1", 500);
+sim.addSubpop("p2", 500);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///EVENTS
+
+
+/// output 10 GENOMES from population 1 at 500 gens
+//define when, here at gen 500, late (after the new generration spawns)
+//500
+//late() 
+
+
+// Slim style output, only pop 1
+//{ p1.outputSample(10); }
+
+// MS style output
+//{ p1.outputMSSample(10); }
+
+//VCF style output (diploid!)
+//{ p1.outputVCFSample(10); }
+
+
+
+/// Full output after 1000 gens
+// 1000
+// late() { sim.outputFull(); }
+
+
+////Can be used to terminate Simulation at 10K gens
+// 10000
+// {
+// sim.simulationFinished();
+// }
+
+10000 late() {
+allIndividuals = sim.subpopulations.individuals; //allIndividuals is comprised of 'individual' objectss
+w = asFloat(allIndividuals.countOfMutationsOfType(m3) + 1);
+print(w);
+print(w);
+sampledIndividuals = sample(allIndividuals, 20, weights=w); //sampledIndividuals is comprised of 'individual' objectss as well 
+print(sampledIndividuals);
+sampledIndividuals.genomes.outputVCF();
+}
+
