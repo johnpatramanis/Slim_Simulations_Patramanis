@@ -1,0 +1,185 @@
+////temporarely modify fitness effect of mutations,effect of mutations on only certain pops,
+//// or only when other mutations are present on the same chromosome, or depending on the frequency it has in a population
+//// or depending on the tags you have distributed through the population
+/////////////////////////////////////////
+/////////////////////////////////////////
+// set up a simple simulation
+initialize() {
+	
+//set up filepaths	
+defineConstant("mu", 1.67e-09);	
+defineConstant("outPref", "out_test_WF_2D");	
+defineConstant("psmc_file", "/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/Nipponia_softCollapse_gen3_varSCALE2.txt");
+defineConstant("ranges_file", "/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/Nipponia_softCollapse_gen3_varSCALE2_ranges.txt");
+defineConstant("rho_file_in", "/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/RecombFile.txt");
+defineConstant("coord_file_in","/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/GCF_000247815.1_FicAlb1.5_genomic.gff_for_SLiM.txt");
+
+
+
+rho_file = readFile(rho_file_in);
+
+
+defineConstant("L", asInteger(strsplit(rho_file[length(rho_file)-1],"\t")[2])); /// L= length of sequence
+coord_file = readFile(coord_file_in);
+
+
+
+
+
+//random seed
+setSeed(rdunif(1, 0, asInteger(2^32) - 1));	
+initializeSLiMOptions(nucleotideBased=T);  ///Nucleotide mode
+initializeAncestralNucleotides(randomNucleotides(L+1)); //Reference Nucl seq
+	
+//mutations	
+initializeMutationTypeNuc("m1", 0.5, "f", 0.0);         // non-coding	
+initializeMutationTypeNuc("m2", 0.5, "f", 0.0);         // synonymous	
+initializeMutationTypeNuc("m3", 0.2, "g", -0.03, 0.2);  // deleterious	
+initializeMutationTypeNuc("m4", 0.6, "e", 0.5);         // beneficial	
+
+
+initializeMutationTypeNuc("m5", 0.5, "f", 0.2);         // CUSTOM	
+m5.convertToSubstitution = F; //does not allow m5 to be considered subst after fixation
+	
+	
+	
+	
+	
+//Create Chromosome Building Blocks	//Jukes Candor simplest mutation matrix, transition=transversion
+initializeGenomicElementType("g1", c(m2,m3,m4), c(0.1,0.1,0.90), mmJukesCantor(mu));  // exon	
+initializeGenomicElementType("g2", c(m1,m3), c(0.9,0.1), mmJukesCantor(mu));           // intron	
+initializeGenomicElementType("g3", c(m1), 1, mmJukesCantor(mu));                       // non-coding	
+	
+
+///Construct Chromosome from Coordinate file
+for (coord_line in coord_file)
+{
+	ROW = strsplit(coord_line, "\t");
+	feature = ROW[2];
+
+	if(feature=="exon") {
+		initializeGenomicElement(g1, asInteger(ROW[3]), asInteger(ROW[4]));
+	}	
+	
+	if(feature=="intron") {	
+		initializeGenomicElement(g2, asInteger(ROW[3]), asInteger(ROW[4]));	
+	}	
+	
+	if(feature=="non_coding") {	
+		initializeGenomicElement(g3, asInteger(ROW[3]), asInteger(ROW[4]));	
+	}	
+	
+}	
+
+//Construct Recombination Landscape from file
+rates = NULL;
+ends = NULL;
+
+for (rho_line in rho_file)
+{
+	components = strsplit(rho_line, "\t");
+	ends = c(ends, asInteger(components[2])); //append to ends file
+	rates = c(rates, asFloat(components[7])); //append to rates file
+}
+
+defineConstant("recomb_ends", ends); //define ends vector
+defineConstant("recomb_rates", rates); //define rate vector
+initializeRecombinationRate(rates, ends); //recombination only needs those two things ends+rates
+
+
+// psmc file
+file = readFile(psmc_file);
+defineConstant("psmc", file); //for later use
+
+// ranges file
+file3 = readFile(ranges_file);
+defineConstant("ranges", file3); //for later use
+
+
+
+
+
+
+
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////   SIMULATION BEGINS
+
+// create a population of 500 individuals
+
+1 {
+sim.addSubpop("p1", 600);
+sim.addSubpop("p2", 600);
+}
+
+
+
+///BURN INz
+
+400:500 fitness(m4) {
+
+if (individual.tag == 0)
+return 1.5; // benefral for 0 tagged individuas
+
+else
+return 1.0;	//normal for others
+}
+
+
+
+
+500:1000 fitness(m4) { return 1.8; }
+
+1001:1500 fitness(m4, p2) { return 1/relFitness; }
+/// here only pop2's m2 fitness effect is decreased. relFitness is the values that m2 would normally have (only used in fitness() call
+
+
+1501:2000 fitness(m4) {   ///here we modify the fitness effect of m1 to be negative
+if (genome1.countOfMutationsOfType(m2)) ///however only when found in genome 1 (genome 1 here means on of the two homologs chromosomes) along with m2 mutations
+return 1.0;
+else if (genome2.countOfMutationsOfType(m2)) ///the same as above but with genome 2 with m2 mutations
+return 0.5;
+else
+return relFitness;
+}
+
+
+2001:2500 fitness(m4) { ///m4 mutation is modified on the frequency it appears in the population !
+return 1.5 - sim.mutationFrequencies(NULL, mut); ///here mut automatically is defined by fitness() to be m2
+
+}
+
+late() {
+p1.individuals.tag = rbinom(600, 1, 0.5); ///randomly tag individuals of population 1  with a number between 
+p2.individuals.tag = rbinom(600, 1, 0.5); 
+// print(p1.individuals.tag);
+}
+
+500:2500 early(){
+if (sim.generation%20==0){
+
+
+meanFitness1 = mean(p1.cachedFitness(NULL)); //NULL is necessery here, we can call a vector of indices instead, for certain individuals
+meanFitness2 = mean(p2.cachedFitness(NULL));
+
+LINE=c(meanFitness1+"\t" + meanFitness2 + "\t" + sim.generation);
+writeFile("test7.txt",LINE,append=T);
+	
+	
+	
+}	
+}
+
+
+
+
+
+
+
+
+
+
+

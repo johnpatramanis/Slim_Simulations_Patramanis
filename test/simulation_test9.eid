@@ -1,0 +1,176 @@
+////Modifying Offspring after mating, eg transfering 'culture' from parents to children
+////
+////
+////
+/////////////////////////////////////////
+// set up a simple simulation
+initialize() {
+	
+//set up filepaths	
+defineConstant("mu", 1.67e-09);	
+defineConstant("outPref", "out_test_WF_2D");	
+defineConstant("psmc_file", "/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/Nipponia_softCollapse_gen3_varSCALE2.txt");
+defineConstant("ranges_file", "/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/Nipponia_softCollapse_gen3_varSCALE2_ranges.txt");
+defineConstant("rho_file_in", "/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/RecombFile.txt");
+defineConstant("coord_file_in","/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/GCF_000247815.1_FicAlb1.5_genomic.gff_for_SLiM.txt");
+
+
+
+rho_file = readFile(rho_file_in);
+
+
+defineConstant("L", asInteger(strsplit(rho_file[length(rho_file)-1],"\t")[2])); /// L= length of sequence
+coord_file = readFile(coord_file_in);
+
+
+
+
+
+//random seed
+setSeed(rdunif(1, 0, asInteger(2^32) - 1));	
+initializeSLiMOptions(nucleotideBased=T);  ///Nucleotide mode
+initializeAncestralNucleotides(randomNucleotides(L+1)); //Reference Nucl seq
+	
+//mutations	
+initializeMutationTypeNuc("m1", 0.5, "f", 0.0);         // non-coding	
+initializeMutationTypeNuc("m2", 0.5, "f", 0.0);         // synonymous	
+initializeMutationTypeNuc("m3", 0.2, "g", -0.03, 0.2);  // deleterious	
+initializeMutationTypeNuc("m4", 0.6, "e", 0.1);         // beneficial	
+
+
+initializeMutationTypeNuc("m5", 0.5, "f", 0.5);         // CUSTOM	
+m5.convertToSubstitution = F; //does not allow m5 to be considered subst after fixation
+	
+	
+	
+	
+	
+//Create Chromosome Building Blocks	//Jukes Candor simplest mutation matrix, transition=transversion
+initializeGenomicElementType("g1", c(m2,m3,m4), c(0.19,0.8,0.01), mmJukesCantor(mu));  // exon	
+initializeGenomicElementType("g2", c(m1,m3), c(0.9,0.1), mmJukesCantor(mu));           // intron	
+initializeGenomicElementType("g3", c(m1,m5), c(0.8,0.2), mmJukesCantor(mu));           // non-coding	
+	
+
+///Construct Chromosome from Coordinate file
+for (coord_line in coord_file)
+{
+	ROW = strsplit(coord_line, "\t");
+	feature = ROW[2];
+
+	if(feature=="exon") {
+		initializeGenomicElement(g1, asInteger(ROW[3]), asInteger(ROW[4]));
+	}	
+	
+	if(feature=="intron") {	
+		initializeGenomicElement(g2, asInteger(ROW[3]), asInteger(ROW[4]));	
+	}	
+	
+	if(feature=="non_coding") {	
+		initializeGenomicElement(g3, asInteger(ROW[3]), asInteger(ROW[4]));	
+	}	
+	
+}	
+
+//Construct Recombination Landscape from file
+rates = NULL;
+ends = NULL;
+
+for (rho_line in rho_file)
+{
+	components = strsplit(rho_line, "\t");
+	ends = c(ends, asInteger(components[2])); //append to ends file
+	rates = c(rates, asFloat(components[7])); //append to rates file
+}
+
+defineConstant("recomb_ends", ends); //define ends vector
+defineConstant("recomb_rates", rates); //define rate vector
+initializeRecombinationRate(rates, ends); //recombination only needs those two things ends+rates
+
+
+// psmc file
+file = readFile(psmc_file);
+defineConstant("psmc", file); //for later use
+
+// ranges file
+file3 = readFile(ranges_file);
+defineConstant("ranges", file3); //for later use
+
+
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////   SIMULATION BEGINS
+
+// create a population of 500 individuals
+
+
+1 {
+	
+sim.addSubpop("p1", 1000);
+p1.individuals.tag = rbinom(1000, 1, 0.1); ////assign a part of the population to the tag 1 and the rest to the tag 0
+print(sum(p1.individuals.tag));
+}
+
+
+fitness(m5) {   ////modify fitness of m5 mut!
+
+if (individual.tag == 0)
+return 1.0; // neutral for non-tagged
+
+
+else
+return relFitness; // beneficial for tagged
+
+
+}
+
+1 late() ////introduce an m5 mutation if not one yet naturally
+{
+count=sum((sim.subpopulations.genomes).countOfMutationsOfType(m5));
+print(count);
+if (count==0)
+{
+target=sample(sim.subpopulations.genomes,10);
+target.addNewDrawnMutation(m5,10000,nucleotide='A');
+}	
+
+else{}
+}
+
+
+modifyChild() {            ///modify the child ,so that tags transfer to childern
+
+//// how to handle genomes here
+//// childGenome2.mutationsOfType(m5); ///example, the gamete of child from parent1
+//// parent1Genome1.mutationsOfType(m5); ///example,  parent2 1st chromosome
+
+
+if (parent1.tag==1) ///// check tags of parents 
+	child.tag = 1 ; ///// decide child's tag     
+	
+else
+	child.tag = 0 ;
+	
+return T;
+
+}
+
+
+
+
+1:300 late() {
+
+	
+ /// print the number of tagged (cultured) individuals
+LINE=c(sum(p1.individuals.tag)+'\t'+sim.generation);
+writeFile("culture.txt",LINE,append=T);
+
+
+
+
+}
+
+
+

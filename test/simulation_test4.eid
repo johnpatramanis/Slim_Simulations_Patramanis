@@ -1,0 +1,154 @@
+/////SELECTIVE SWEeeeeP , TRACK PERCENTAGE OF POPULATOIN + THE FITNESS OF POP + sexual reproduction (autosomic chrom)
+/////////////////////////////////////////
+/////////////////////////////////////////
+/// set up a simple simulation
+
+initialize()
+
+{
+// set the overall mutation rate
+initializeMutationRate(1e-7);
+
+
+///////////////////////////////////////// DIFFERENT MUTATIONS AVAILABLE
+// m1 mutation type: neutral
+initializeMutationType("m1", 0.5, "f", 0.0);
+
+// m2 mutation type: neutral
+initializeMutationType("m2", 0.5, "f", 0.0);
+
+// m3 mutation type: benef?
+initializeMutationType("m3", 0.5, "f", 0.00);
+m3.convertToSubstitution = F; //unnecessary because 2 sub-pops here never communicate, mutations never fix in population
+// m4 mutation type: delet?
+initializeMutationType("m4", 0.5, "e", -0.001);
+m4.convertToSubstitution = F;
+
+//m5 super benef mutation!
+initializeMutationType("m5", 1.0, "f", 0.3);
+m5.convertToSubstitution = F;
+
+///////////////////////////////////////// GENOMIC ELEMENTS OF CHROMOSOME
+
+// g1 genomic element type: uses m1,m2,m3
+initializeGenomicElementType("g1", c(m1,m2), c(0.5,0.5));
+
+//g2 genomic element type: uses only m3 for all mutations
+initializeGenomicElementType("g2", c(m1,m3,m4), c(0.5,0.25,0.25));
+
+
+
+//////////////////////////////////////// CONTSTRUCTION OF CHROMOSOME
+////// STRUCTURE
+// uniform chromosome of length 100 kb
+initializeGenomicElement(g1, 0, 99999);
+initializeGenomicElement(g2, 100000, 199999);
+initializeGenomicElement(g1, 200000, 299999);
+
+
+
+/// RECOMB
+// uniform recombination along the chromosome
+initializeRecombinationRate(1e-8);
+
+
+/// Sexual Reprodution!
+initializeSex("A");
+
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////   SIMULATION BEGINS
+
+
+//1st
+1 {
+sim.addSubpop("p1", 3000);
+sim.addSubpop("p2", 500);
+
+
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///EVENTS
+
+100 late(){
+	
+target = sample(p1.genomes, 1); 
+target.addNewDrawnMutation(m5, 500);	 //add a mutation at position 10001 type m2 for the randomly sampled individual(s)
+	
+}
+
+///////////////////////////////////////////
+
+101:500 late(){
+
+if (sim.countOfMutationsOfType(m5)==0)	
+{
+	
+target = sample(p1.genomes, 1); 
+target.addNewDrawnMutation(m5, 500);
+
+}
+
+
+
+}
+
+///////////////////////////////////////////
+
+
+
+{
+if(sim.generation%5==0)
+{
+	
+mut=unique(sim.subpopulations.genomes.mutationsOfType(m5)); /// isolate mutations of type 5
+print(mut);
+PERCENTAGE1=sim.mutationFrequencies(p1,mut);    /// get frequency of those mutations in specific pop (NULL for all pops)
+PERCENTAGE2=sim.mutationFrequencies(p2,mut); /// get frequency of those mutations in specific pop (NULL for all pops)
+
+
+       
+if(size(mut)==0){
+PERCENTAGE1=0;
+PERCENTAGE2=0;
+	
+}
+ 
+
+GEN=sim.generation;
+LINE=c(PERCENTAGE1+"\t"+ GEN );
+writeFile("sweep1.txt",LINE,append=T);
+
+
+LINE=c(PERCENTAGE2+"\t"+ GEN );
+writeFile("sweep2.txt",LINE,append=T);
+	
+
+	
+meanFitness1 = mean(p1.cachedFitness(NULL)); //NULL is necessery here, we can call a vector of indices instead, for certain individuals
+meanFitness2 = mean(p2.cachedFitness(NULL));
+
+LINE=c(meanFitness1+"\t"+ meanFitness2);
+writeFile("fitness.txt",LINE,append=T);
+
+
+
+}
+}
+
+
+
+
+// 5000 late() {
+
+// c(sample(sim.subpopulations[0].individuals.genomes,50),sample(sim.subpopulations[1].individuals.genomes,50),sample(sim.subpopulations[2].individuals.genomes,50)).outputVCF();
+
+// }
+
+
+////// na xwrisw ton kwdika sto kommati pou eisagei h oxi metallaxeis kai sto kommati pou katagrafei pramata (eg tis 2 megales loopes)

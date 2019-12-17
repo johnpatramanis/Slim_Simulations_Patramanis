@@ -1,0 +1,143 @@
+////Creating CUSTOM sex ,Checking Real/Custom Sex ratios and modifying them(?)
+////
+////
+////
+/////////////////////////////////////////
+// set up a simple simulation
+initialize() {
+	
+//set up filepaths	
+defineConstant("mu", 1.67e-09);	
+defineConstant("outPref", "out_test_WF_2D");	
+defineConstant("psmc_file", "/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/Nipponia_softCollapse_gen3_varSCALE2.txt");
+defineConstant("ranges_file", "/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/Nipponia_softCollapse_gen3_varSCALE2_ranges.txt");
+defineConstant("rho_file_in", "/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/RecombFile.txt");
+defineConstant("coord_file_in","/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/GCF_000247815.1_FicAlb1.5_genomic.gff_for_SLiM.txt");
+
+
+
+rho_file = readFile(rho_file_in);
+
+
+defineConstant("L", asInteger(strsplit(rho_file[length(rho_file)-1],"\t")[2])); /// L= length of sequence
+coord_file = readFile(coord_file_in);
+
+
+
+
+
+//random seed
+setSeed(rdunif(1, 0, asInteger(2^32) - 1));	
+initializeSLiMOptions(nucleotideBased=T);  ///Nucleotide mode
+initializeAncestralNucleotides(randomNucleotides(L+1)); //Reference Nucl seq
+	
+//mutations	
+initializeMutationTypeNuc("m1", 0.5, "f", 0.0);         // non-coding	
+initializeMutationTypeNuc("m2", 0.5, "f", 0.0);         // synonymous	
+initializeMutationTypeNuc("m3", 0.2, "g", -0.03, 0.2);  // deleterious	
+initializeMutationTypeNuc("m4", 1.0, "f", 1.0);         // beneficial	
+
+
+initializeMutationTypeNuc("m5", 1.0, "f", 1.0);         // CUSTOM	
+m5.convertToSubstitution = F; //does not allow m5 to be considered subst after fixation
+	
+	
+	
+	
+	
+//Create Chromosome Building Blocks	//Jukes Candor simplest mutation matrix, transition=transversion
+initializeGenomicElementType("g1", c(m2,m3), c(0.2,0.8), mmJukesCantor(mu));  // exon	
+initializeGenomicElementType("g2", c(m1,m3), c(0.9,0.1), mmJukesCantor(mu));           // intron	
+initializeGenomicElementType("g3", c(m1,m5,m4), c(0.2,0.4,0.4), mmJukesCantor(mu));           // non-coding	
+	
+
+///Construct Chromosome from Coordinate file
+for (coord_line in coord_file)
+{
+	ROW = strsplit(coord_line, "\t");
+	feature = ROW[2];
+
+	if(feature=="exon") {
+		initializeGenomicElement(g1, asInteger(ROW[3]), asInteger(ROW[4]));
+	}	
+	
+	if(feature=="intron") {	
+		initializeGenomicElement(g2, asInteger(ROW[3]), asInteger(ROW[4]));	
+	}	
+	
+	if(feature=="non_coding") {	
+		initializeGenomicElement(g3, asInteger(ROW[3]), asInteger(ROW[4]));	
+	}	
+	
+}	
+
+//Construct Recombination Landscape from file
+rates = NULL;
+ends = NULL;
+
+for (rho_line in rho_file)
+{
+	components = strsplit(rho_line, "\t");
+	ends = c(ends, asInteger(components[2])); //append to ends file
+	rates = c(rates, asFloat(components[7])); //append to rates file
+}
+
+defineConstant("recomb_ends", ends); //define ends vector
+defineConstant("recomb_rates", rates); //define rate vector
+initializeRecombinationRate(rates, ends); //recombination only needs those two things ends+rates
+
+
+// psmc file
+file = readFile(psmc_file);
+defineConstant("psmc", file); //for later use
+
+// ranges file
+file3 = readFile(ranges_file);
+defineConstant("ranges", file3); //for later use
+
+initializeSex("A");
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////   SIMULATION BEGINS
+
+// create a population of 500 individuals
+
+
+1 {
+	
+sim.addSubpop("p1", 500);
+p1.individuals.tag = repEach(0:1, 250); // F==0, M==1  /////repetition zero to one 250 times
+
+
+}
+
+
+
+modifyChild() {
+	
+if (parent1.tag + parent2.tag != 1)
+	return F;
+
+child.tag = rdunif(1);
+return T;
+
+}
+
+
+1: late() {
+	
+
+
+FAKESEX=mean((p1.individuals.tag));
+TRUSEX=sum(asInteger(sim.subpopulations.individuals.sex=='M')); //// true sexual ratio stays the same
+
+LINE=c(FAKESEX+'\t'+TRUSEX+'\t'+sim.generation);
+writeFile("test11.txt",LINE,append=T);
+
+}
+
+600 late() {}
+

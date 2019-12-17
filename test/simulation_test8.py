@@ -9,7 +9,6 @@ import sys
 from multiprocessing import Process,Manager
 import matplotlib
 from matplotlib import pyplot as plt
-# matplotlib.use('Agg') 
 from sklearn.decomposition import PCA
 import umap
 from sklearn.manifold import TSNE
@@ -19,7 +18,23 @@ from sklearn.manifold import TSNE
 ##RUN SIMULATION FROM SLIM
 
 OUT='LOG_SLIM'
-os.system('slim simulation_test1.eid > {}'.format(OUT))
+os.system('slim simulation_test8.eid > {}'.format(OUT))
+
+##################################################
+#FUNCTIONS
+
+def translate_to_int(n):
+    n=str(n)
+    count=n.count('0')
+    if count==0:
+        k=2
+    if count==1:
+        k=1
+    if count==2:
+        k=0
+    return k
+
+
 
 ###################################################
 #FUNCTIONS
@@ -36,7 +51,7 @@ def translate_to_int(n):
 
 ###################################################
 #open produced vcf file
-vcf=open(OUT,'r')
+vcf=open('mating.vcf','r')
 
 #bypass first line of output , that are not vcf
 runner=1
@@ -69,33 +84,10 @@ X = np.asarray(genotypes)
 print(X.shape) 
 
 ###################################################################
-colorz=['g' for x in range(0,250)]  + ['r' for x in range(0,250)] + ['b' for x in range(0,250)]
-print(len(colorz))
+
 pca = PCA(n_components=2).fit_transform(X)
 
 plt.figure(figsize=(100, 60))
-plt.scatter([x[0] for x in pca],[x[1] for x in pca],c=colorz)
+plt.scatter([x[0] for x in pca],[x[1] for x in pca])
 
 plt.show()
-
-###############################################################
-
-UMAPPED=umap.UMAP().fit_transform(X)
-
-
-plt.figure(figsize=(100, 60))
-plt.scatter([x[0] for x in UMAPPED],[x[1] for x in UMAPPED],c=colorz)
-
-plt.show()
-
-
-###############################################################
-
-TSNEd = TSNE(n_components=2).fit_transform(X)
-
-
-plt.figure(figsize=(100, 60))
-plt.scatter([x[0] for x in TSNEd],[x[1] for x in TSNEd],c=colorz)
-
-plt.show()
-

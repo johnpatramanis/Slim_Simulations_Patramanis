@@ -1,0 +1,131 @@
+/////////// Population dynamics/demographics + calculation of fitness
+/////////////////////////////////////////
+/////////////////////////////////////////
+// set up a simple simulation
+
+initialize()
+
+{
+// set the overall mutation rate
+initializeMutationRate(1e-7);
+
+
+///////////////////////////////////////// DIFFERENT MUTATIONS AVAILABLE
+// m1 mutation type: neutral
+initializeMutationType("m1", 0.5, "f", 0.0);
+
+// m2 mutation type: neutral
+initializeMutationType("m2", 0.5, "f", 0.0);
+
+// m3 mutation type: benef?
+initializeMutationType("m3", 0.5, "f", 0.001);
+m3.convertToSubstitution = F; //unnecessary because 2 sub-pops here never communicate, mutations never fix in population
+// m4 mutation type: delet?
+initializeMutationType("m4", 0.5, "e", -0.001);
+m4.convertToSubstitution = F;
+
+
+///////////////////////////////////////// GENOMIC ELEMENTS OF CHROMOSOME
+
+// g1 genomic element type: uses m1,m2,m3
+initializeGenomicElementType("g1", c(m1,m2), c(0.5,0.5));
+
+//g2 genomic element type: uses only m3 for all mutations
+initializeGenomicElementType("g2", c(m1,m3,m4), c(0.5,0.25,0.25));
+
+
+
+//////////////////////////////////////// CONTSTRUCTION OF CHROMOSOME
+////// STRUCTURE
+// uniform chromosome of length 100 kb
+initializeGenomicElement(g1, 0, 99999);
+initializeGenomicElement(g2, 100000, 199999);
+initializeGenomicElement(g1, 200000, 299999);
+
+
+
+/// RECOMB
+// uniform recombination along the chromosome
+initializeRecombinationRate(1e-8);
+
+
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////   SIMULATION BEGINS
+
+// create a population of 3000 individuals
+
+1
+{
+sim.addSubpop("p1", 3000);
+sim.addSubpop("p2", 3000);
+
+
+}
+
+
+100 { /// at generation 100
+
+sim.addSubpopSplit("p3", 1000, p1);	
+
+p3.setMigrationRates(c(p2,p1), c(0.02,0.01)); //migration from other 2 populations to p3 but not reverse!
+
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///EVENTS
+
+
+
+1:3000 late() { ///ticks/loops in every generation
+	
+	
+	
+//print(sim.generation); ///if we want to monitor 
+
+if(sim.generation%10==0){ /// loops in every 10 generations
+K= asInteger(p1.individualCount * 1.0005); //// K is sligthly larger than p1 current size
+J= p2.individualCount/1000; ///// J is equal to 0.001* p2 size
+p1.setSubpopulationSize(K);   //// modify p1 size to be equal to K 
+p2.setSubpopulationSize(asInteger(p2.individualCount-J));  //// modify p2 size to be equal to p2-J
+//print(K); ///if we want to check them every time this happens
+//print(J);
+
+//if(sim.generation==100){  //// we can use this to stop the loop from happenning after 100 generations or whenever
+//sim.deregisterScriptBlock(self); //this turns off the current slim code block, ege everything inside 1:1000 {}
+
+
+//}
+
+}
+}
+
+
+
+{
+if(sim.generation%100==0) //// loops in every 100 generations
+{
+meanFitness1 = mean(p1.cachedFitness(NULL)); //NULL is necessery here, we can call a vector of indices instead, for certain individuals
+meanFitness2 = mean(p2.cachedFitness(NULL));
+cat(paste(c(meanFitness1,meanFitness2),'\t')+'\n'); /// print out the fitness of each population
+
+}
+}
+
+
+3001 late() { /// finish
+print(p1.individualCount); ////check number of individuals in every population
+print(p2.individualCount);
+print(p3.individualCount);
+INDS=c(sample(sim.subpopulations[0].individuals,250),sample(sim.subpopulations[1].individuals,250),sample(sim.subpopulations[2].individuals,250)); ///gather samples from every subpop
+print(size(INDS));
+INDS.genomes.outputVCF(); ///print them in vcf
+
+}
+
+
+

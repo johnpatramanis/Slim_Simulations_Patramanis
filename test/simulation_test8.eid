@@ -1,0 +1,200 @@
+////MATING CHOICE
+/// First mating depending on having or not a mutation
+////
+////
+/////////////////////////////////////////
+// set up a simple simulation
+initialize() {
+	
+//set up filepaths	
+defineConstant("mu", 1.67e-09);	
+defineConstant("outPref", "out_test_WF_2D");	
+defineConstant("psmc_file", "/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/Nipponia_softCollapse_gen3_varSCALE2.txt");
+defineConstant("ranges_file", "/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/Nipponia_softCollapse_gen3_varSCALE2_ranges.txt");
+defineConstant("rho_file_in", "/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/RecombFile.txt");
+defineConstant("coord_file_in","/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/GCF_000247815.1_FicAlb1.5_genomic.gff_for_SLiM.txt");
+
+
+
+rho_file = readFile(rho_file_in);
+
+
+defineConstant("L", asInteger(strsplit(rho_file[length(rho_file)-1],"\t")[2])); /// L= length of sequence
+coord_file = readFile(coord_file_in);
+
+
+
+
+
+//random seed
+setSeed(rdunif(1, 0, asInteger(2^32) - 1));	
+initializeSLiMOptions(nucleotideBased=T);  ///Nucleotide mode
+initializeAncestralNucleotides(randomNucleotides(L+1)); //Reference Nucl seq
+	
+//mutations	
+initializeMutationTypeNuc("m1", 0.5, "f", 0.0);         // non-coding	
+initializeMutationTypeNuc("m2", 0.5, "f", 0.0);         // synonymous	
+initializeMutationTypeNuc("m3", 0.2, "g", -0.03, 0.2);  // deleterious	
+initializeMutationTypeNuc("m4", 0.6, "e", 0.1);         // beneficial	
+
+
+initializeMutationTypeNuc("m5", 0.5, "f", 0.05);         // CUSTOM	
+m5.convertToSubstitution = F; //does not allow m5 to be considered subst after fixation
+	
+	
+	
+	
+	
+//Create Chromosome Building Blocks	//Jukes Candor simplest mutation matrix, transition=transversion
+initializeGenomicElementType("g1", c(m2,m3,m4), c(0.19,0.8,0.01), mmJukesCantor(mu));  // exon	
+initializeGenomicElementType("g2", c(m1,m3), c(0.9,0.1), mmJukesCantor(mu));           // intron	
+initializeGenomicElementType("g3", c(m1), 1, mmJukesCantor(mu));                       // non-coding	
+	
+
+///Construct Chromosome from Coordinate file
+for (coord_line in coord_file)
+{
+	ROW = strsplit(coord_line, "\t");
+	feature = ROW[2];
+
+	if(feature=="exon") {
+		initializeGenomicElement(g1, asInteger(ROW[3]), asInteger(ROW[4]));
+	}	
+	
+	if(feature=="intron") {	
+		initializeGenomicElement(g2, asInteger(ROW[3]), asInteger(ROW[4]));	
+	}	
+	
+	if(feature=="non_coding") {	
+		initializeGenomicElement(g3, asInteger(ROW[3]), asInteger(ROW[4]));	
+	}	
+	
+}	
+
+//Construct Recombination Landscape from file
+rates = NULL;
+ends = NULL;
+
+for (rho_line in rho_file)
+{
+	components = strsplit(rho_line, "\t");
+	ends = c(ends, asInteger(components[2])); //append to ends file
+	rates = c(rates, asFloat(components[7])); //append to rates file
+}
+
+defineConstant("recomb_ends", ends); //define ends vector
+defineConstant("recomb_rates", rates); //define rate vector
+initializeRecombinationRate(rates, ends); //recombination only needs those two things ends+rates
+
+
+// psmc file
+file = readFile(psmc_file);
+defineConstant("psmc", file); //for later use
+
+// ranges file
+file3 = readFile(ranges_file);
+defineConstant("ranges", file3); //for later use
+
+
+
+
+
+
+
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////   SIMULATION BEGINS
+
+// create a population of 500 individuals
+
+
+1 {
+	
+sim.addSubpop("p1", 500);
+sim.addSubpop("p2", 500);
+
+p1.setMigrationRates(p2, 0.1);
+p2.setMigrationRates(p1, 0.1);
+
+}
+
+
+100 late() {
+	
+target = sample(p1.genomes, 250);
+target.addNewDrawnMutation(m5, 10000,nucleotide='A');
+
+}
+
+////////////SLOW BUT EASIER WAIT
+
+// 2000: mateChoice() {
+	
+// parent1HasMut = (individual.countOfMutationsOfType(m5) > 0);      /// the individual here is the parent making the mating choice! here we check if he/she has the mutation - if homozygous, count will be 2
+// parent2HasMut = (sourceSubpop.individuals.countOfMutationsOfType(m5) > 0); ////count of mutations for all individuals of subpop, potential mates
+
+// if (parent1HasMut) ///if >0
+// return weights * ifelse(parent2HasMut, 2.0, 1.0); ///ifelse: if 1st parameter provided is true then choose to return second parameter, if false return 3rd
+// / you have to multiply the new weigth with the already existing weights otherwise fitness calculation go to dumpster 
+// / if chooser has mutation and chosen has mutation weights*2
+// / if chooser has mutation and chosen has not, weights*1
+
+// else  ////if no mutation
+// return weights * ifelse(parent2HasMut, 0.5, 1.0);
+// if choser has no mutation and chosen has, weights * 0.5 (dislike mutant)
+// if chosen has no mutation and chosen has not, wieghts * 1.0
+
+// }
+
+
+///////////////FASTER BUT A BIT MORE COMPLEX
+
+
+
+
+200:400 early() {
+// tag all individuals with their m2 mutation count
+inds = sim.subpopulations.individuals; ///grab all individuals
+inds.tag = inds.countOfMutationsOfType(m5);  ////assign them tags depending on their number of mutation5 (heteroz,homozyg)
+// precalculate mating weights vectors
+print(inds.tag);
+
+
+for (subpop in c(p1,p2)) /// for each subpopulation
+{
+has_m5 = (subpop.individuals.tag > 0); ////if has mut 5 true, logical vector
+subpop.setValue("weights1", ifelse(has_m5, 2.0, 1.0)); ///// if has mut5 weigth1=2 and weight2=0.5
+subpop.setValue("weights2", ifelse(has_m5, 1.0, 2.0)); ////// if no mut5 wieght1=1 and weight2=1
+subpop.setValue("Height", ifelse(has_m5, 0.5, 1.0)); ////// if no mut5 wieght1=1 and weight2=1
+
+}
+}
+
+
+
+200:400 mateChoice() {  ////mating choice
+if (individual.tag > 0) ///if i have or not the mutation, individual is always the one who makes the choice inside mateChoice() callback
+
+return weights * sourceSubpop.getValue("weights1"); /////if i do I pick using weight 1
+
+else
+return weights * sourceSubpop.getValue("weights2"); //// if i dont, I pick using weight 2
+}
+
+
+400 late() {
+allIndividuals = sim.subpopulations.individuals;     //allIndividuals is comprised of 'individual' objectss
+sampledIndividuals = sample(allIndividuals,200);     //sampledIndividuals is comprised of 'individual' objectss as well 
+sampledIndividuals.genomes.outputVCF('mating.vcf');
+}
+
+
+
+
+// 4000 { sim.simulationFinished(); }
+
+
+

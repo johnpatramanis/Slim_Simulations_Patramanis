@@ -1,0 +1,158 @@
+//// FIRST PART OF HERNANS CODE (file reading,chromosome,recomb set up,nucld model) + SLECTIVE SWEEP TRACKING in population using tags
+/////////////////////////////////////////
+/////////////////////////////////////////
+// set up a simple simulation
+initialize() {
+	
+//set up filepaths	
+defineConstant("mu", 1.67e-09);	
+defineConstant("outPref", "out_test_WF_2D");	
+defineConstant("psmc_file", "/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/Nipponia_softCollapse_gen3_varSCALE2.txt");
+defineConstant("ranges_file", "/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/Nipponia_softCollapse_gen3_varSCALE2_ranges.txt");
+defineConstant("rho_file_in", "/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/RecombFile.txt");
+defineConstant("coord_file_in","/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/GCF_000247815.1_FicAlb1.5_genomic.gff_for_SLiM.txt");
+
+
+
+rho_file = readFile(rho_file_in);
+
+
+defineConstant("L", asInteger(strsplit(rho_file[length(rho_file)-1],"\t")[2])); /// L= length of sequence
+coord_file = readFile(coord_file_in);
+
+
+
+
+
+//random seed
+setSeed(rdunif(1, 0, asInteger(2^32) - 1));	
+initializeSLiMOptions(nucleotideBased=T);  ///Nucleotide mode
+initializeAncestralNucleotides(randomNucleotides(L+1)); //Reference Nucl seq
+	
+//mutations	
+initializeMutationTypeNuc("m1", 0.5, "f", 0.0);         // non-coding	
+initializeMutationTypeNuc("m2", 0.5, "f", 0.0);         // synonymous	
+initializeMutationTypeNuc("m3", 0.2, "g", -0.03, 0.2);  // deleterious	
+initializeMutationTypeNuc("m4", 0.6, "e", 0.1);         // beneficial	
+
+
+initializeMutationTypeNuc("m5", 1.0, "f", 0.5);         // CUSTOM	
+m5.convertToSubstitution = F;	
+	
+	
+	
+	
+	
+//Create Chromosome Building Blocks	//Jukes Candor simplest mutation matrix, transition=transversion
+initializeGenomicElementType("g1", c(m2,m3,m4), c(0.19,0.8,0.01), mmJukesCantor(mu));  // exon	
+initializeGenomicElementType("g2", c(m1,m3), c(0.9,0.1), mmJukesCantor(mu));           // intron	
+initializeGenomicElementType("g3", c(m1), 1, mmJukesCantor(mu));                       // non-coding	
+	
+
+///Construct Chromosome from Coordinate file
+for (coord_line in coord_file)
+{
+	ROW = strsplit(coord_line, "\t");
+	feature = ROW[2];
+
+	if(feature=="exon") {
+		initializeGenomicElement(g1, asInteger(ROW[3]), asInteger(ROW[4]));
+	}	
+	
+	if(feature=="intron") {	
+		initializeGenomicElement(g2, asInteger(ROW[3]), asInteger(ROW[4]));	
+	}	
+	
+	if(feature=="non_coding") {	
+		initializeGenomicElement(g3, asInteger(ROW[3]), asInteger(ROW[4]));	
+	}	
+	
+}	
+
+//Construct Recombination Landscape from file
+rates = NULL;
+ends = NULL;
+
+for (rho_line in rho_file)
+{
+	components = strsplit(rho_line, "\t");
+	ends = c(ends, asInteger(components[2])); //append to ends file
+	rates = c(rates, asFloat(components[7])); //append to rates file
+}
+
+defineConstant("recomb_ends", ends); //define ends vector
+defineConstant("recomb_rates", rates); //define rate vector
+initializeRecombinationRate(rates, ends); //recombination only needs those two things ends+rates
+
+
+// psmc file
+file = readFile(psmc_file);
+defineConstant("psmc", file); //for later use
+
+// ranges file
+file3 = readFile(ranges_file);
+defineConstant("ranges", file3); //for later use
+
+
+
+
+
+
+
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////   SIMULATION BEGINS
+
+// create a population of 500 individuals
+
+1 {
+sim.addSubpop("p1", 500);
+p1.tag = 0; // indicate that a mutation has not yet been seen
+}
+
+
+
+500:700 late() {
+if (sim.generation % 10 == 0) {
+
+target = sample(p1.genomes,1);
+
+if (target.countOfMutationsOfType(m5) == 0) //if there are no m5 mutatitions, (or if the have already fixed on the population?)
+
+target.addNewDrawnMutation(m5, 10000,nucleotide="A"); //in nucleotide model you draw mutation must be supplied with a nucleotide!
+
+	
+}
+}
+
+
+
+1:1000 late() {
+	
+if (p1.tag != sim.countOfMutationsOfType(m5)) {
+	
+if (any(sim.substitutions.mutationType == m5)) //if an m5 mutation fixes
+{
+	
+cat("Hard sweep ended in generation " + sim.generation + "\n"); 
+sim.simulationFinished();
+} 
+
+else 
+{
+p1.tag = sim.countOfMutationsOfType(m5); // else tag becomes number of m5 existing mutations + print it
+cat("Gen. " + sim.generation + ": " + p1.tag + " lineage(s)\n");
+
+if ((p1.tag == 0) & (sim.generation > 1100)) /// if more than 1100 gens and tag/number of m5 muts is 0, fail!
+{
+cat("Sweep failed to establish.\n");
+sim.simulationFinished();
+
+}
+}
+
+}
+}

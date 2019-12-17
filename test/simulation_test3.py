@@ -9,7 +9,6 @@ import sys
 from multiprocessing import Process,Manager
 import matplotlib
 from matplotlib import pyplot as plt
-# matplotlib.use('Agg') 
 from sklearn.decomposition import PCA
 import umap
 from sklearn.manifold import TSNE
@@ -19,10 +18,11 @@ from sklearn.manifold import TSNE
 ##RUN SIMULATION FROM SLIM
 
 OUT='LOG_SLIM'
-os.system('slim simulation_test1.eid > {}'.format(OUT))
+os.system('slim simulation_test3.eid> {}'.format(OUT))
 
-###################################################
+##################################################
 #FUNCTIONS
+
 def translate_to_int(n):
     n=str(n)
     count=n.count('0')
@@ -34,11 +34,14 @@ def translate_to_int(n):
         k=0
     return k
 
-###################################################
-#open produced vcf file
+
+
+
+
+
 vcf=open(OUT,'r')
 
-#bypass first line of output , that are not vcf
+
 runner=1
 counter=0
 while runner:
@@ -51,7 +54,7 @@ while runner:
         print('took too long, something went wrong or too many SNPs')
         break
 
-#first line of genotypes
+
 firstline=vcf.readline().strip().split()
 firstgenotypes=firstline[9:]
 genotypes=[[translate_to_int(x)] for x in firstgenotypes]
@@ -68,9 +71,7 @@ for line in vcf:
 X = np.asarray(genotypes)   
 print(X.shape) 
 
-###################################################################
 colorz=['g' for x in range(0,250)]  + ['r' for x in range(0,250)] + ['b' for x in range(0,250)]
-print(len(colorz))
 pca = PCA(n_components=2).fit_transform(X)
 
 plt.figure(figsize=(100, 60))
@@ -80,22 +81,22 @@ plt.show()
 
 ###############################################################
 
-UMAPPED=umap.UMAP().fit_transform(X)
+# UMAPPED=umap.UMAP().fit_transform(X)
 
 
-plt.figure(figsize=(100, 60))
-plt.scatter([x[0] for x in UMAPPED],[x[1] for x in UMAPPED],c=colorz)
+# plt.figure(figsize=(100, 60))
+# plt.scatter([x[0] for x in UMAPPED],[x[1] for x in UMAPPED])
 
-plt.show()
-
-
-###############################################################
-
-TSNEd = TSNE(n_components=2).fit_transform(X)
+# plt.show()
 
 
-plt.figure(figsize=(100, 60))
-plt.scatter([x[0] for x in TSNEd],[x[1] for x in TSNEd],c=colorz)
+##############################################################
 
-plt.show()
+# TSNEd = TSNE(n_components=2).fit_transform(X)
+
+
+# plt.figure(figsize=(100, 60))
+# plt.scatter([x[0] for x in TSNEd],[x[1] for x in TSNEd])
+
+# plt.show()
 

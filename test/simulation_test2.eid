@@ -1,0 +1,166 @@
+///// Here we play around isolating and handling mutations as well as creating a custom reference genome for MS style output
+/////////////////////////////////////////
+/////////////////////////////////////////
+// set up a simple simulation
+
+initialize()
+
+{
+// set the overall mutation rate
+initializeMutationRate(1e-7);
+
+
+///////////////////////////////////////// DIFFERENT MUTATIONS AVAILABLE
+// m1 mutation type: neutral
+initializeMutationType("m1", 0.5, "f", 0.0);
+
+// m2 mutation type: neutral
+initializeMutationType("m2", 0.5, "f", 0.0);
+
+// m3 mutation type: benef?
+initializeMutationType("m3", 0.5, "f", 0.001);
+
+
+
+///////////////////////////////////////// GENOMIC ELEMENTS OF CHROMOSOME
+
+// g1 genomic element type: uses m1,m2,m3
+initializeGenomicElementType("g1", c(m1,m2,m3), c(0.4,0.5,0.1));
+
+//g2 genomic element type: uses only m3 for all mutations
+initializeGenomicElementType("g2", m3, 1.0);
+
+
+
+//////////////////////////////////////// CONTSTRUCTION OF CHROMOSOME
+////// STRUCTURE
+// uniform chromosome of length 100 kb
+initializeGenomicElement(g1, 0, 99999);
+initializeGenomicElement(g2, 100000, 199999);
+initializeGenomicElement(g1, 200000, 299999);
+
+
+
+/// RECOMB
+// uniform recombination along the chromosome
+initializeRecombinationRate(1e-8);
+
+
+
+//you can set all sorts of parameters here
+//X=10;
+//you can also print stuff here like this
+//print(X);
+
+
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////   SIMULATION BEGINS
+
+// create a population of 500 individuals
+
+1
+{
+sim.addSubpop("p1", 500);
+sim.addSubpop("p2", 500);
+
+}
+
+
+
+
+
+2000 late() {
+cat('ALL MUTATIONS\n');
+print(size(sim.subpopulations.genomes.mutations)); /// all mutations that exist
+print(size(sim.subpopulations.genomes)); /// all genomes, 2 times the nubmer of individuals 
+allmutations=sortBy(unique(sim.subpopulations.genomes.mutations), "position");           ///isolate all mutations,from all genomes, get only the uniques          
+mutations3=(allmutations.mutationType==m3); ///logical with true for mutation type m3    ///(if ind A and ind B share a mut, get it only once) and sort them
+mutations3=allmutations[mutations3];         ///isolate muations of type 3
+print(mutations3.position);                  /// these are their positions 
+
+
+
+print(size(allmutations));   ///compare number of overall mutations
+print(size(mutations3));     /// with number of mutations type m3
+
+cat('MY GUY\'s MUTATIONS\n');
+myguy=sim.subpopulations[0].genomes[0];     ///isolate a random test individual
+print(myguy);                               ///here he is
+
+myguysmut=sortBy(myguy.mutations, "position");     ///get his mutations and sort them
+print(myguysmut);                                   /// here they are
+print(myguysmut.position);                          /// also their positions
+print(size(myguysmut));                             /// their number (if he is homoz for reference allele then mutation doesnt show up
+
+
+
+cat('Matching my guys mutations to the \'REFERENCE\' :\n');
+MATCHING1=((match(mutations3,myguysmut))>=0); ///now we shall see which mutations from m3 match the mutations of our guy ,e.g. he has them or not NOTE: match(SET,SUBSET)
+print(MATCHING1); //// logical 
+print(asInteger(MATCHING1)); /// turned into ms style output
+
+
+/// obtain a random sample of genomes from the whole population
+g = sample(sim.subpopulations.genomes, 10, T);
+
+
+/// get the unique mutations in the sample, sorted by position
+m = sortBy(unique(g.mutations), "position");
+
+
+
+
+// print the number of segregating sites
+cat("\n\nsegsites: " + size(m) + "\n");
+// print the positions
+positions = format("%.6f", m.position / sim.chromosome.lastPosition); //#format like here guarantees that there are 6 digits to the right of 0
+
+
+cat("positions: " + paste(positions, " ") + "\n");
+// print the sampled genomes
+
+for (genome in g)
+{
+hasMuts = (match(m, genome.mutations) >= 0); //#match return T,F - 1,0 so only pick trues
+cat(paste(asInteger(hasMuts), "") + "\n");
+}
+
+////////////////////////////////////////////////
+/// now do it again only for mutations of type m3
+/// print the number of segregating sites
+cat("\n\nsegsites: " + size(mutations3) + "\n");
+// print the positions
+positions = format("%.6f", mutations3.position / sim.chromosome.lastPosition); ///format like here guarantees that there are 6 digits to the right of 0
+
+
+cat("positions: " + paste(positions, " ") + "\n");
+// print the sampled genomes
+
+for (genome in g)
+{
+hasMuts = (match(mutations3, genome.mutations) >= 0); //#match return T,F - 1,0 so only pick trues
+cat(paste(asInteger(hasMuts), "") + "\n");
+}
+
+////////////////////////////////////////////////
+/// now do it again for all mutations that exist in the populations
+/// print the number of segregating sites
+cat("\n\nsegsites: " + size(allmutations) + "\n");
+// print the positions
+positions = format("%.6f", allmutations.position / sim.chromosome.lastPosition); ///format like here guarantees that there are 6 digits to the right of 0
+
+
+cat("positions: " + paste(positions, " ") + "\n");
+// print the sampled genomes
+
+for (genome in g)
+{
+hasMuts = (match(allmutations, genome.mutations) >= 0); //#match return T,F - 1,0 so only pick trues
+cat(paste(asInteger(hasMuts), "") + "\n");
+}
+
+}
