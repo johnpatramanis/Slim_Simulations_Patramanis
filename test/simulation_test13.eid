@@ -1,0 +1,157 @@
+//// Quantative traits - using Fitnessscaling for individuals based on quantative traits (either benef or delet)
+////
+////
+/////////////////////////////////////////
+// set up a simple simulation
+initialize() {
+	
+//set up filepaths	
+defineConstant("mu", 1.67e-09);	
+defineConstant("outPref", "out_test_WF_2D");	
+defineConstant("psmc_file", "/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/Nipponia_softCollapse_gen3_varSCALE2.txt");
+defineConstant("ranges_file", "/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/Nipponia_softCollapse_gen3_varSCALE2_ranges.txt");
+defineConstant("rho_file_in", "/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/RecombFile.txt");
+defineConstant("coord_file_in","/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/GCF_000247815.1_FicAlb1.5_genomic.gff_for_SLiM.txt");
+
+
+
+rho_file = readFile(rho_file_in);
+
+
+defineConstant("L", asInteger(strsplit(rho_file[length(rho_file)-1],"\t")[2])); /// L= length of sequence
+coord_file = readFile(coord_file_in);
+
+
+
+
+
+//random seed
+setSeed(rdunif(1, 0, asInteger(2^32) - 1));	
+initializeSLiMOptions(nucleotideBased=T);  ///Nucleotide mode
+initializeAncestralNucleotides(randomNucleotides(L+1)); //Reference Nucl seq
+	
+//mutations	
+initializeMutationTypeNuc("m1", 0.5, "f", 0.0);         // non-coding	
+initializeMutationTypeNuc("m2", 0.5, "f", 0.0);         // synonymous	
+initializeMutationTypeNuc("m3", 0.2, "g", -0.03, 0.2);  // deleterious	
+initializeMutationTypeNuc("m4", 0.5, "f", 0.2);         // beneficial	
+
+
+initializeMutationTypeNuc("m5", 0.5,"n", 0.0, 0.5);        // CUSTOM	
+m5.convertToSubstitution = F; //does not allow m5 to be considered subst after fixation
+	
+	
+	
+	
+	
+//Create Chromosome Building Blocks	//Jukes Candor simplest mutation matrix, transition=transversion
+initializeGenomicElementType("g1", c(m2,m3), c(0.2,0.8), mmJukesCantor(mu));  // exon	
+initializeGenomicElementType("g2", c(m1,m3), c(0.9,0.1), mmJukesCantor(mu));           // intron	
+initializeGenomicElementType("g3", c(m1,m5,m4), c(0.2,0.4,0.4), mmJukesCantor(mu));           // non-coding	
+	
+
+///Construct Chromosome from Coordinate file
+for (coord_line in coord_file)
+{
+	ROW = strsplit(coord_line, "\t");
+	feature = ROW[2];
+
+	if(feature=="exon") {
+		initializeGenomicElement(g1, asInteger(ROW[3]), asInteger(ROW[4]));
+	}	
+	
+	if(feature=="intron") {	
+		initializeGenomicElement(g2, asInteger(ROW[3]), asInteger(ROW[4]));	
+	}	
+	
+	if(feature=="non_coding") {	
+		initializeGenomicElement(g3, asInteger(ROW[3]), asInteger(ROW[4]));	
+	}	
+	
+}	
+
+//Construct Recombination Landscape from file
+rates = NULL;
+ends = NULL;
+
+for (rho_line in rho_file)
+{
+	components = strsplit(rho_line, "\t");
+	ends = c(ends, asInteger(components[2])); //append to ends file
+	rates = c(rates, asFloat(components[7])); //append to rates file
+}
+
+defineConstant("recomb_ends", ends); //define ends vector
+defineConstant("recomb_rates", rates); //define rate vector
+initializeRecombinationRate(rates, ends); //recombination only needs those two things ends+rates
+
+
+// psmc file
+file = readFile(psmc_file);
+defineConstant("psmc", file); //for later use
+
+// ranges file
+file3 = readFile(ranges_file);
+defineConstant("ranges", file3); //for later use
+
+initializeSex("A");
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////   SIMULATION BEGINS
+
+// create a population of 500 individuals
+
+fitness(m5) { return 1.0; } //// As far as the simulation is conserned the m5 mutations are now neutral HOWEVER, they still posses internally a fitness coeficient which we use later
+
+
+1 {
+	
+sim.addSubpop("p1", 500);
+
+deleteFile("fitness.txt");	
+
+}
+
+
+1: late() {
+	
+inds = sim.subpopulations.individuals;
+phenotypes = inds.sumOfMutationsOfType(m5);  ////// Returns the sum of the selection coefficients (read above) of all mutations that are of the type specified by mutType,out of all of the mutations in the genome per Individual
+inds.fitnessScaling = 1.5 - (((phenotypes - 10.0)^2) * 0.005);     ///// here we modify fitness scaling in each generation so a sum of 10 would be the maximum!
+
+if (sim.generation % 100 == 0)
+catn(sim.generation + ": Mean phenotype == " + mean(phenotypes));
+
+}
+
+
+
+
+
+
+1:20000 early(){
+
+if (sim.generation%100==0)	{
+
+NumberofMuts=sum(sim.subpopulations.genomes.countOfMutationsOfType(m5));
+MUTS=ifelse(NumberofMuts==0,0,NumberofMuts);
+FIT=mean(sim.subpopulations[0].cachedFitness(NULL));
+GEN=sim.generation;
+LINE=c(FIT+'\t'+GEN+'\t'+MUTS);
+
+
+writeFile("fitness.txt",LINE,append=T);	
+
+
+	}
+	
+}
+
+
+
+
+
+
