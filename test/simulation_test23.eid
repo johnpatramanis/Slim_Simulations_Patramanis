@@ -1,0 +1,145 @@
+///// Specieation due to spacial variation!
+///// Example from manual
+///// Competiotion + Mating Choice based on Phenotype that is based on Quantitive trait
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+initialize() {
+	
+defineConstant("sigma_C", 0.1);
+defineConstant("sigma_K", 0.5);
+defineConstant("sigma_M", 0.1);
+defineConstant("slope", 1.0);
+defineConstant("N", 500);
+
+
+
+
+initializeSLiMOptions(dimensionality="xyz");
+initializeMutationRate(1e-6);
+initializeMutationType("m1", 0.5, "f", 0.0); // neutral
+initializeMutationType("m2", 0.5, "n", 0.0, 1.0); // QTL
+m2.convertToSubstitution = F;
+initializeGenomicElementType("g1", c(m1, m2), c(1, 0.1));
+initializeGenomicElement(g1, 0, 1e5 - 1);
+initializeRecombinationRate(1e-8);
+
+
+initializeInteractionType(1, "xyz", reciprocal=T,maxDistance=sigma_C * 3); // competition
+i1.setInteractionFunction("n", 7.0, sigma_C);
+
+initializeInteractionType(2, "xyz", reciprocal=T,maxDistance=sigma_M * 3); // mate choice
+i2.setInteractionFunction("n", 1.0, sigma_M);
+
+
+}
+
+
+
+fitness(m2) { return 1.0; }///silence muts
+
+
+
+1 late() {
+	
+sim.addSubpop("p1", N);
+
+p1.setSpatialBounds(c(0.0, 0.0, -slope, 1.0, 1.0, slope));  ///// How to set spacial bounds!
+
+p1.individuals.setSpatialPosition(p1.pointUniform(N));      ///// Set random numbers within bounds
+p1.individuals.z = 0.0; ///// set this dim to zero
+
+}
+
+
+modifyChild() {
+	
+// set offspring position based on parental position
+do pos = c(parent1.spatialPosition[0:1] + rnorm(2, 0, 0.005), 0.0);
+while (!p1.pointInBounds(pos)); ////check if child in bounds of population
+
+child.setSpatialPosition(pos);
+
+return T;
+
+}
+
+
+1: late() {
+	
+inds = sim.subpopulations.individuals;
+
+//// construct phenotypes and fitness effects from QTLs
+phenotypes = inds.sumOfMutationsOfType(m2);
+
+
+optima = (inds.y - 0.5) * slope;
+inds.fitnessScaling = 1.0 + 2*dnorm(phenotypes, optima, sigma_K);
+
+
+// print(phenotypes[0]);
+// print(optima[0]);
+// print(dnorm(phenotypes[0], optima[0], sigma_K));
+// print('#');
+inds.z = phenotypes;
+
+
+
+
+//// evaluate phenotypic competition
+i1.evaluate();
+competition = sapply(inds, "sum(i1.strength(applyValue));");
+effects = 1.0 - competition / size(inds);
+inds.fitnessScaling = inds.fitnessScaling * effects;
+// evaluate mate choice in preparation for next generation
+i2.evaluate();
+
+
+}
+
+
+mateChoice() {
+// spatial mate choice
+
+// print(i2.strength(individual));
+// print('£££££££');
+// print(weights*0.01);
+return i2.strength(individual);
+
+
+}
+
+
+1:30000 late() {
+if (sim.generation == 1)
+cat(" gen mean sd\n");
+if (sim.generation % 100 == 1)
+{
+phenotypes = p1.individuals.z;
+cat(format("%5d ", sim.generation));
+cat(format("%6.2f ", mean(phenotypes)));
+cat(format("%6.2f\n", sd(phenotypes)));
+}
+}
+
+
+
+30001 late(){
+P1pos=cbind(sim.subpopulations.individuals.x,sim.subpopulations.individuals.y,sim.subpopulations.individuals.z);
+
+POS=P1pos;
+
+
+deleteFile("positions.txt");
+
+
+for (LINU in 0:(nrow(POS)-1)){
+
+writeFile("positions.txt",paste(POS[LINU,],"\t"),append=T);
+
+}
+
+system("python3 posplotter2.py --posfile positions.txt", wait=T);
+
+
+}

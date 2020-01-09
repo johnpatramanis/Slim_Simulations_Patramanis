@@ -1,0 +1,238 @@
+///// SPACIAL EXISTANCE - LIVE PLOTTING
+///// Random Position
+///// Modify Child to Parents Position
+///// Spacial Competition - Fitness dependancy on nearby individuals
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+initialize() {
+
+
+
+//set up filepaths	
+defineConstant("mu", 1.67e-09);	
+defineConstant("outPref", "out_test_WF_2D");	
+defineConstant("psmc_file", "/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/Nipponia_softCollapse_gen3_varSCALE2.txt");
+defineConstant("ranges_file", "/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/Nipponia_softCollapse_gen3_varSCALE2_ranges.txt");
+defineConstant("rho_file_in", "/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/RecombFile.txt");
+defineConstant("coord_file_in","/mnt/c/Users/Johnp/Documents/SlimFiles/fromHernan/GCF_000247815.1_FicAlb1.5_genomic.gff_for_SLiM.txt");
+
+
+
+rho_file = readFile(rho_file_in);
+
+
+defineConstant("L", asInteger(strsplit(rho_file[length(rho_file)-1],"\t")[2])); /// L= length of sequence
+coord_file = readFile(coord_file_in);
+
+
+
+
+
+//random seed
+setSeed(rdunif(1, 0, asInteger(2^32) - 1));	
+initializeSLiMOptions(keepPedigrees = T ,dimensionality="xy", nucleotideBased=T);  
+initializeAncestralNucleotides(randomNucleotides(L+1)); ///Reference Nucl seq
+	
+// Set up an interaction for spatial competition /////////////////////////////////////////////////////////////////////////////////////////////////////////// <<<<<<<<<<<
+initializeInteractionType(1, "xy", reciprocal=T, maxDistance=0.3); /////interaction ID, dimentions , reciprocal=T=interaction of a to = interactions of b to a, max distance of effect
+i1.setInteractionFunction("n",1.0,0.1);	/////interactions will have numbers from normal distrib of max 3.0 and sd 0.1
+	
+	
+	
+	
+//mutations	
+initializeMutationTypeNuc("m1", 0.5, "f", 0.0);         // non-coding	
+initializeMutationTypeNuc("m2", 0.5, "f", 0.0);         // synonymous	
+initializeMutationTypeNuc("m3", 0.2, "g", -0.03, 0.2);  // deleterious	
+initializeMutationTypeNuc("m4", 0.5, "f", 0.2);         // beneficial	
+
+initializeMutationTypeNuc("m5", 0.5,"n", 0.0, 0.0);        // CUSTOM	
+m5.convertToSubstitution = F; //does not allow m5 to be considered subst after fixation
+	
+	
+	
+	
+	
+//Create Chromosome Building Blocks	//Jukes Candor simplest mutation matrix, transition=transversion
+initializeGenomicElementType("g1", c(m2,m3), c(0.2,0.8), mmJukesCantor(mu));  // exon	
+initializeGenomicElementType("g2", c(m1,m3), c(0.9,0.1), mmJukesCantor(mu));           // intron	
+initializeGenomicElementType("g3", c(m1,m5,m4), c(0.2,0.4,0.4), mmJukesCantor(mu));           // non-coding	
+	
+
+///Construct Chromosome from Coordinate file
+for (coord_line in coord_file)
+{
+	ROW = strsplit(coord_line, "\t");
+	feature = ROW[2];
+
+	if(feature=="exon") {
+		initializeGenomicElement(g1, asInteger(ROW[3]), asInteger(ROW[4]));
+	}	
+	
+	if(feature=="intron") {	
+		initializeGenomicElement(g2, asInteger(ROW[3]), asInteger(ROW[4]));	
+	}	
+	
+	if(feature=="non_coding") {	
+		initializeGenomicElement(g3, asInteger(ROW[3]), asInteger(ROW[4]));	
+	}	
+	
+}	
+
+//Construct Recombination Landscape from file
+rates = NULL;
+ends = NULL;
+
+for (rho_line in rho_file)
+{
+	components = strsplit(rho_line, "\t");
+	ends = c(ends, asInteger(components[2])); //append to ends file
+	rates = c(rates, asFloat(components[7])); //append to rates file
+}
+
+defineConstant("recomb_ends", ends); //define ends vector
+defineConstant("recomb_rates", rates); //define rate vector
+initializeRecombinationRate(rates, ends); //recombination only needs those two things ends+rates
+
+
+// psmc file
+file = readFile(psmc_file);
+defineConstant("psmc", file); //for later use
+
+// ranges file
+file3 = readFile(ranges_file);
+defineConstant("ranges", file3); //for later use
+
+initializeSex("A");
+
+}
+
+
+
+
+
+
+//// set up sim, with positions for each pop
+
+1 {
+sim.addSubpop("p1", 500);
+
+p1.individuals.x = runif(p1.individualCount,0.1,0.3);
+p1.individuals.y = runif(p1.individualCount,0.1,0.3);
+
+
+defineConstant("pdfPath", writeTempFile("plot_", ".pdf", ""));
+print(pdfPath);
+sim.setValue("pdfOpened", F);
+deleteFile("positions.txt");
+	
+}
+
+
+
+1: late() {
+// evaluate interactions before fitness calculations, needs to occur!
+i1.evaluate();
+}
+
+
+
+
+fitness(NULL) {
+// modify fitnesss - spatial competition or cooperation 
+totalStrength = i1.totalOfNeighborStrengths(individual);
+
+
+// print(i1.totalOfNeighborStrengths(individual));
+// print(i1.distance(individual,sim.subpopulations.individuals));
+
+
+return (1.5 - (totalStrength / 500));
+}
+
+
+//// Modify child to pick parents position
+modifyChild() {
+// draw a child position near the first parent, within bounds!!
+do child.x = parent1.x + rnorm(1, 0, 0.001);
+
+while ((child.x < 0.0) | (child.x > 1.0));
+
+do child.y = parent1.y + rnorm(1, 0, 0.001);
+
+while ((child.y < 0.0) | (child.y > 1.0));
+
+return T;
+
+}
+
+
+
+
+
+1: late() {
+	
+	
+if (sim.generation % 100 == 0)
+{
+
+// INDS=c(sample(sim.subpopulations[0].individuals,250),sample(sim.subpopulations[1].individuals,250),sample(sim.subpopulations[2].individuals,250)); ///gather samples from every subpop
+
+// INDS.genomes.outputVCF(filePath='myvcf.vcf'); ///print them in vcf
+
+// system("python3 posplotter.py --posfile positions.txt", wait=T);
+
+RandomGuy=sample(sim.subpopulations.individuals,1);
+print(i1.totalOfNeighborStrengths(RandomGuy));
+
+
+
+
+
+
+P1pos=cbind(p1.individuals.x,p1.individuals.y);
+
+POS=P1pos;
+
+
+
+// print(c(mean(P1pos[,0]),mean(P1pos[,1])));
+// print(c(mean(P2pos[,0]),mean(P2pos[,1])));
+// print(c(mean(P3pos[,0]),mean(P3pos[,1])));
+
+
+deleteFile("positions.txt");
+for (LINU in 0:(nrow(POS)-1)){
+
+writeFile("positions.txt",paste(POS[LINU,],"\t"),append=T);
+
+}
+
+system("python3 posplotter1.py --posfile positions.txt", wait=T);
+
+
+
+if (!sim.getValue("pdfOpened"))
+	
+{
+
+system("mupdf -r 18 plot.pdf",wait=F);
+sim.setValue("pdfOpened", T);
+
+
+}
+
+else{
+system("pkill -HUP mupdf",wait=F);
+}
+
+
+
+}
+}
+
+
+
+1000 late() {}
