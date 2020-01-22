@@ -1,1 +1,83 @@
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////
+/////////////////////////////////////////
+// set up a simple simulation
 
+initialize()
+
+{
+// set the overall mutation rate
+initializeMutationRate(1e-7);
+
+
+///////////////////////////////////////// DIFFERENT MUTATIONS AVAILABLE
+// m1 mutation type: neutral
+initializeMutationType("m1", 0.5, "f", 0.0);
+
+// m2 mutation type: neutral
+initializeMutationType("m2", 0.5, "f", 0.0);
+
+// m3 mutation type: neutral
+initializeMutationType("m3", 0.5, "f", 0.00);
+
+
+
+///////////////////////////////////////// GENOMIC ELEMENTS OF CHROMOSOME
+
+// g1 genomic element type: uses m1,m2,m3
+initializeGenomicElementType("g1", c(m1,m2,m3), c(0.4,0.5,0.1));
+
+
+//////////////////////////////////////// CONTSTRUCTION OF CHROMOSOME
+////// STRUCTURE
+// uniform chromosome of length 100 kb
+initializeGenomicElement(g1, 0, 10000);
+
+
+/// RECOMB
+// uniform recombination along the chromosome
+initializeRecombinationRate(2e-7);
+
+
+
+//you can set all sorts of parameters here
+//X=10;
+//you can also print stuff here like this
+//print(X);
+
+
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////   SIMULATION BEGINS
+
+// create a population of 500 individuals
+
+1
+{
+sim.addSubpop("p1", 100);
+
+}
+
+
+
+
+
+1500 late() {
+	
+	
+sampledIndividuals=NULL;
+for (subpop in sim.subpopulations)
+{
+print(subpop);
+allIndividuals = subpop.individuals;     //allIndividuals is comprised of 'individual' objectss
+
+sampledIndividuals = c(sampledIndividuals,sample(allIndividuals,250));     //sampledIndividuals is comprised of 'individual' objectss as well 
+print(size(sampledIndividuals));
+}
+sampledIndividuals.genomes.outputVCF();
+
+
+}
