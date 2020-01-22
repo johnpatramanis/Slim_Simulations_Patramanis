@@ -334,14 +334,15 @@ print(paste(c('Memory (MB): ',usage()),'\t'));
 
 
 
-1:5000 late(){ /////// plotting, map value changing and other stuff
+1:15000 late(){ /////// plotting, map value changing and other stuff
 
 GEN=sim.generation;
 i2.evaluate();
 DECREASE_TIMER=1000;
-START=1000;
+START_DEC=1000;
+START_INC=7000;
 
-	if (GEN%DECREASE_TIMER==0 & GEN<=(DECREASE_TIMER*3+START) & GEN>=START ){////////////// Map Values changing (minus) //////////////////////////////////////////////////////////////////////////////////////////////////////
+	if ( (GEN%DECREASE_TIMER==0) & (p1.getValue("REP")<=3) & ( GEN < START_INC ) & ( GEN>= START_DEC ) ){////////////// Map Values changing (minus) //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 	Li = p1.getValue("L");
@@ -369,7 +370,11 @@ START=1000;
 
 	}/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	if (GEN%DECREASE_TIMER==0 & GEN>=(DECREASE_TIMER*4+START) &  GEN<=(DECREASE_TIMER*6+START) ){////////////// Map Values changing (plus) //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+	if ( (GEN%DECREASE_TIMER==0) & (p1.getValue("REP")>=0) &  ( GEN>=START_INC ){////////////// Map Values changing (plus) //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 	Li = p1.getValue("L");
@@ -377,10 +382,10 @@ START=1000;
 
 
 
-	Li[(REPO*10):((REPO*10)+9)]=1;
-	Li[((99-(REPO*10))-9):(99-(REPO*10))]=1;
-	Li[seq(((REPO*10)+REPO),99,10)]=1;
-	Li[seq(9+((10*REPO)-REPO),99,10)]=1;
+	Li[((REPO*10)+REPO):((REPO*10)+9-REPO)]=1;
+	Li[((99-(REPO*10))-9+REPO):((99-(REPO*10))-REPO)]=1;
+	Li[seq(((REPO*10)+REPO),99-((REPO*10)+REPO),10)]=1;
+	Li[seq(9+((10*REPO)-REPO),99-(9+((10*REPO)-REPO)),10)]=1;
 
 
 
