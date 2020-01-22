@@ -1,0 +1,88 @@
+///////////////////////////////////////////////////////   NON WF   ////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////// Colonization - Meta Populations - Population Extinction  ///////////
+initialize() {
+	
+	
+initializeSLiMModelType("nonWF");
+defineConstant("K", 100); // carrying capacity per subpop
+defineConstant("N", 10); // number of subpopulations
+defineConstant("m", 0.01); // migration rate
+defineConstant("e", 0.01); // subpopulation extinction rate
+initializeMutationType("m1", 0.5, "f", 0.0);
+m1.convertToSubstitution = T;
+initializeGenomicElementType("g1", m1, 1.0);
+initializeGenomicElement(g1, 0, 99999);
+initializeMutationRate(1e-7);
+initializeRecombinationRate(1e-8);
+
+}
+
+
+reproduction() {
+	
+subpop.addCrossed(individual, subpop.sampleIndividuals(1));
+
+}
+
+
+1 early() {
+	
+for (i in 1:N)
+sim.addSubpop(i, (i == 1) ? 10 else 0); /////// You can create populations that have zero population 
+
+}
+
+
+early() {
+	
+// random migration
+nIndividuals = sum(sim.subpopulations.individualCount); /// all individuals across pops
+nMigrants = rpois(1, nIndividuals * m);  ////pick a random number to be migrants
+migrants = sample(sim.subpopulations.individuals, nMigrants);  ////pick individuals to migrate
+
+for (migrant in migrants)
+{
+do dest = sample(sim.subpopulations, 1); ////pick a population at random
+while (dest == migrant.subpopulation);  //// while migrant's pop is the same as dest, repeat
+dest.takeMigrants(migrant); ///// assign individuals to that population 
+}		
+
+
+// density-dependence and random extinctions
+for (subpop in sim.subpopulations)  //// randomly kill off populations
+{
+if (runif(1) < e)
+subpop.fitnessScaling = 0.0;
+else
+subpop.fitnessScaling = K / subpop.individualCount;
+}
+
+}
+
+
+
+
+late() {
+	
+if (sum(sim.subpopulations.individualCount) == 0){
+stop("Global extinction in generation " + sim.generation + ".");
+}
+
+if (sim.generation%30==0){
+for (subpop in sim.subpopulations)	{
+print(paste(c(subpop.id,subpop.individualCount),'\t'));
+
+
+}
+print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
+}
+
+
+}
+
+
+3000 late() {
+	
+sim.outputFixedMutations();
+
+}
