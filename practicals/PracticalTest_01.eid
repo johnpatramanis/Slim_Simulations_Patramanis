@@ -51,19 +51,23 @@ function (f$)subpopHeterozygosity(o<Subpopulation>$ subpop, [i$ sampleSize=100])
 	return pi_total / sampleSize;
 }
 
+////////////////////////////////////////////////////////////////// NEW Modified Functions for Windows   /////////////////////////////////////////////////////////////////////////////////
 
-
-function (f$)genomicHeterozygosityWindow(o<Genome>$ genome1, o<Genome>$ genome2 )
+function (f$)genomicHeterozygosityWindow(o<Genome>$ genome1, o<Genome>$ genome2 ,integer$ window1 , integer$ window2 )
 {
 	muts1 = genome1.mutations;
+	muts1 = muts1[muts1.position>=window1 & muts1.position<=window2];
+	
 	muts2 = genome2.mutations;
+	muts2 = muts2[muts2.position>=window1 & muts2.position<=window2];	
+	
 	unshared = setSymmetricDifference(muts1, muts2);
-	pi = size(unshared) / L;
+	pi = size(unshared) / (window2-window1);
 	return pi;
 }
 
 
-function (f$)subpopHeterozygosityWindow(o<Subpopulation>$ subpop, [i$ sampleSize=100])
+function (f$)subpopHeterozygosityWindow( o<Subpopulation>$ subpop, integer$ window1, integer$ window2, [i$ sampleSize=100] )
 {
 	if (sampleSize == subpop.individualCount)
 		sampledIndividuals = subpop.individuals;
@@ -74,13 +78,25 @@ function (f$)subpopHeterozygosityWindow(o<Subpopulation>$ subpop, [i$ sampleSize
 	for (individual in sampledIndividuals)
 	{
 		genomes = individual.genomes;
-		individual_pi = genomicHeterozygosityWindow(genomes[0], genomes[1]);
+		individual_pi = genomicHeterozygosityWindow(genomes[0], genomes[1], window1 , window2);
 		pi_total = pi_total + individual_pi;
 	}
 	return pi_total / sampleSize;
 }
 
 
+
+function (f$)sampleHeterozygosityWindow(  * sampledIndividuals , integer$ window1, integer$ window2)
+{
+	pi_total = 0;
+	for (individual in sampledIndividuals)
+	{
+		genomes = individual.genomes;
+		individual_pi = genomicHeterozygosityWindow(genomes[0], genomes[1], window1 , window2);
+		pi_total = pi_total + individual_pi;
+	}
+	return pi_total / size(sampledIndividuals);
+}
 
 
 
@@ -553,10 +569,9 @@ START_INC=8000;
 	
 	INDS.genomes.outputVCF(filePath=paste(c('Myvcf_',OUT_HERE,'.vcf'),''));     //// VCF output 
 	
-	
+	// WINDOWS_XP=seq(0,sim.chromosome.lastPosition,10000);
+	// for (WINDOW in)
 	HETERO=subpopHeterozygosity(p1);
-	
-
 	writeFile('Hetero',asString(HETERO),append=T);
 	
 	
