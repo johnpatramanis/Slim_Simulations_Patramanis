@@ -2,7 +2,95 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////// CUSTOM FUNCTIONZZZ  /////////////////////
 
+function (f$)calcFST(o<Subpopulation>$ subpop1, o<Subpopulation>$ subpop2)
+{
+	p1_p = sim.mutationFrequencies(subpop1);
+	p2_p = sim.mutationFrequencies(subpop2);
+	mean_p = (p1_p + p2_p) / 2.0;
+	H_t = 2.0 * mean_p * (1.0 - mean_p);
+	H_s = p1_p * (1.0 - p1_p) + p2_p * (1.0 - p2_p);
+	fst = 1.0 - H_s/H_t;
+	fst = fst[!isNAN(fst)];  // exclude muts where mean_p is 0.0 or 1.0
+	return mean(fst);
+}
+
+
+function (f$)genomicHeterozygosity(o<Genome>$ genome1, o<Genome>$ genome2)
+{
+	muts1 = genome1.mutations;
+	muts2 = genome2.mutations;
+	unshared = setSymmetricDifference(muts1, muts2);
+	pi = size(unshared) / L;
+	return pi;
+}
+
+/*
+
+  Estimate the average nucleotide heterozygosity in a subpopulation by sampling individuals at random and averaging the heterozygosity of all of the individuals sampled.  Note that this function normally uses a sample of individuals, of a size supplied in the optional parameter sampleSize; but if sampleSize is equal to the number of individuals in subpop, it will instead compute the heterozygosity exactly, as the mean of the heterozygosities of all individuals, rather than taking a sample.  For large subpopulations, that will of course be much slower than using a sample, however.
+
+*/
+
+
+
+function (f$)subpopHeterozygosity(o<Subpopulation>$ subpop, [i$ sampleSize=100])
+{
+	if (sampleSize == subpop.individualCount)
+		sampledIndividuals = subpop.individuals;
+	else
+		sampledIndividuals = sample(subpop.individuals, sampleSize, replace=T);
+	
+	pi_total = 0;
+	for (individual in sampledIndividuals)
+	{
+		genomes = individual.genomes;
+		individual_pi = genomicHeterozygosity(genomes[0], genomes[1]);
+		pi_total = pi_total + individual_pi;
+	}
+	return pi_total / sampleSize;
+}
+
+
+
+function (f$)genomicHeterozygosityWindow(o<Genome>$ genome1, o<Genome>$ genome2 )
+{
+	muts1 = genome1.mutations;
+	muts2 = genome2.mutations;
+	unshared = setSymmetricDifference(muts1, muts2);
+	pi = size(unshared) / L;
+	return pi;
+}
+
+
+function (f$)subpopHeterozygosityWindow(o<Subpopulation>$ subpop, [i$ sampleSize=100])
+{
+	if (sampleSize == subpop.individualCount)
+		sampledIndividuals = subpop.individuals;
+	else
+		sampledIndividuals = sample(subpop.individuals, sampleSize, replace=T);
+	
+	pi_total = 0;
+	for (individual in sampledIndividuals)
+	{
+		genomes = individual.genomes;
+		individual_pi = genomicHeterozygosityWindow(genomes[0], genomes[1]);
+		pi_total = pi_total + individual_pi;
+	}
+	return pi_total / sampleSize;
+}
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -151,7 +239,7 @@ sim.addSubpop("p1", 300);
 
 p1.setSpatialBounds(c(0,0,1.0,1.0));
 
-p1.individuals.setSpatialPosition(p1.pointUniform(1));
+p1.individuals.setSpatialPosition(p1.pointUniform(300));
 sim.setValue("pdfOpened", F);
 
 // runif(25, 0, 1)
@@ -161,11 +249,13 @@ defineConstant("mapValues", rep(1.0,100));        ////////////// Create X values
 p1.setValue("L", mapValues);
 p1.setValue("REP", 0);
 p1.setValue("ENV_CAP",sum(mapValues)*10);
+p1.setValue("OUT",0);
 
 p1.defineSpatialMap("map1", "xy", c(10,10), mapValues, interpolate=T,valueRange=c(0.0, 1.0), colors=c("red", "yellow")); 
 
 
 
+deleteFile('Hetero');
 defineConstant("pdfPath", writeTempFile("plot_", ".pdf", ""));
 print(pdfPath);
 sim.setValue("pdfOpened", F);
@@ -334,7 +424,7 @@ print(paste(c('Memory (MB): ',usage()),'\t'));
 
 
 
-1:15000 late(){ /////// plotting, map value changing and other stuff
+1:15000 late(){ ///&&&&&&&&&& plotting, map value changing and other stuff  &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 GEN=sim.generation;
 i2.evaluate();
@@ -413,26 +503,26 @@ START_INC=8000;
 
 
 
-	if (GEN%500==0){///////////// Live plotting of positions //////////////////////////////////////////////////////////////////////////////////////////////////////
+	if (GEN%500==0 & GEN>=1000){///////////// Live plotting of positions //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-		P1pos=cbind(p1.individuals.x,p1.individuals.y);
+		P1pos=cbind(p1.individuals.x,p1.individuals.y); ///grab the positions
 
 		POS=P1pos;
 
 
-		deleteFile("positions.txt");
+		deleteFile("positions.txt"); ///make sure to delete previous one
 		
 			for (LINU in 0:(nrow(POS)-1)){
 
 			writeFile("positions.txt",paste(POS[LINU,],"\t"),append=T);
 
-			}
+			}///print out positions in the file
 
-		system("python3 practplotter1.py --posfile positions.txt", wait=T);
+		system("python3 practplotter1.py --posfile positions.txt", wait=T);///activate the plot machine!
 
 
 
-			if (!sim.getValue("pdfOpened"))
+			if (!sim.getValue("pdfOpened")) ////the first time the plotting is called
 			{
 
 			system("mupdf -r 18 plot.pdf",wait=F);
@@ -442,12 +532,47 @@ START_INC=8000;
 
 
 
-			else
+			else  ////all the other times
 			{
 			system("pkill -HUP mupdf",wait=F);
 			}
 
+
 	}//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-}
 
+
+
+
+	if (GEN%1000==0){////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	OUT_HERE=p1.getValue("OUT");   /// Output file name indicator
+	
+	
+	// INDS=p1.individuals;
+	INDS=sample(p1.individuals,100,T); //// sample 100 individuals 
+	
+	INDS.genomes.outputVCF(filePath=paste(c('Myvcf_',OUT_HERE,'.vcf'),''));     //// VCF output 
+	
+	
+	HETERO=subpopHeterozygosity(p1);
+	
+
+	writeFile('Hetero',asString(HETERO),append=T);
+	
+	
+	
+	
+	
+	
+	
+	p1.setValue("OUT",OUT_HERE+1); ///// renew value for next print
+	
+	}////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+}///&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
