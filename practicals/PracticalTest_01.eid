@@ -269,8 +269,8 @@ p1.setValue("REP", 0);           ///// Used for changing Enviromenet
 p1.setValue("ENV_CAP",sum(mapValues)*10);    ////Capacity of population size
 p1.setValue("OUT",0);   //// Used for outputing files 
 
-p1.setValue("LEN_WINDOW",10000);  ////length of window we want to do calculations/metrics on
-p1.setValue("WINDOWS_XP",seq(0,sim.chromosome.lastPosition,10000));  ///// Split Chromosome into windows and store them
+p1.setValue("LEN_WINDOW",100000);  ////length of window we want to do calculations/metrics on
+p1.setValue("WINDOWS_XP",seq(0,sim.chromosome.lastPosition,100000));  ///// Split Chromosome into windows and store them
 
 
 p1.defineSpatialMap("map1", "xy", c(10,10), mapValues, interpolate=T,valueRange=c(0.0, 1.0), colors=c("red", "yellow"));   ////set up the background capacity map 
@@ -442,9 +442,9 @@ print(paste(c('Memory (MB): ',usage()),'\t'));
 
 GEN=sim.generation;
 i2.evaluate();
-DECREASE_TIMER=1000;
+DECREASE_TIMER=100;
 START_DEC=10000;
-START_INC=12000;
+START_INC=11000;
 
 	if ( (GEN%DECREASE_TIMER==0) & (p1.getValue("REP")<=3) & ( GEN < START_INC ) & ( GEN>= START_DEC ) ){////////////// Map Values changing (minus) //////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -518,7 +518,7 @@ START_INC=12000;
 
 
 
-	if (GEN%500==0 & GEN>=1000)
+	if (GEN%10000==0 & GEN>=1000)
 	{///////////// Live plotting of positions //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		P1pos=cbind(p1.individuals.x,p1.individuals.y); ///grab the positions
@@ -562,16 +562,19 @@ START_INC=12000;
 
 
 
-	if (GEN%1000==0)
+	if ( (GEN>=0 & GEN%1000==0) )
 	{////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	OUT_HERE=p1.getValue("OUT");   /// Output file name indicator
 	
 	
 	// INDS=p1.individuals;
-	INDS=sample(p1.individuals,100,T); //// sample 100 individuals 
-	
-	// INDS.genomes.outputVCF(filePath=paste(c('Myvcf_',OUT_HERE,'.vcf'),''));     //// VCF output 
-	
+	if (size(p1.individuals)>=100){
+		INDS=sample(p1.individuals,100,F); //// sample 100 individuals 
+		}
+		// INDS.genomes.outputVCF(filePath=paste(c('Myvcf_',OUT_HERE,'.vcf'),''));     //// VCF output 
+	else{
+	INDS=sample(p1.individuals,size(p1.individuals),F);	
+	}
 
 
 	
@@ -579,7 +582,7 @@ START_INC=12000;
 	MY_WINDOWS=p1.getValue("WINDOWS_XP"); /////Get the Windows
 	LENGTH_OF_WINDOW=p1.getValue("LEN_WINDOW");  ////gap of windows
 
-	mysamples = sample(p1.individuals, 100, replace=T); ////select random individuals for calcs
+	mysamples = INDS; ////select random individuals for calcs
 
 	deleteFile(paste(c('Hetero_',asString(OUT_HERE)),''));////get rid of prev runs file
 	
@@ -590,7 +593,7 @@ START_INC=12000;
 	writeFile(paste(c('Hetero_',asString(OUT_HERE)),''),asString(HETERO),append=T); /////write it out in our file
 	
 	}
-	
+	writeFile(paste(c('Hetero_',asString(OUT_HERE)),''),asString(GEN),append=T);
 	
 	p1.setValue("OUT",OUT_HERE+1); ///// renew value for next print
 	
