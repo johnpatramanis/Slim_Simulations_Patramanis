@@ -28,6 +28,7 @@ args = parser.parse_args()
 Hetero_title=args.hetero[0]
 Heteroz=[]
 GENERATIONS=[]
+POPSIZE=[]
 
 NUMBEROFREPS= len(glob.glob('./{}*'.format(args.hetero[0])))
 print (NUMBEROFREPS)
@@ -38,8 +39,9 @@ for rep in range(0,NUMBEROFREPS):
     print('reading File number {}'.format(rep))
     for line in FILE:
         Heterohere.append(float(line.strip()))
-    GENERATIONS.append(Heterohere[-1])
-    Heterohere=Heterohere[:-1] 
+    GENERATIONS.append(Heterohere[-2])
+    POPSIZE.append(Heterohere[-1])
+    Heterohere=Heterohere[:-2] 
     Heterohere=np.mean(Heterohere)
     Heteroz.append(Heterohere)
     FILE.close()
@@ -49,8 +51,10 @@ for rep in range(0,NUMBEROFREPS):
 # print(Heteroz)
 # print(GENERATIONS)
 
-REPS=range(0,len(Heteroz))
+
 # colorz=['b' for x in range(0,len(POSITIONS))] 
+
+POPSIZE=[(x* 10**(-8)) for x in POPSIZE]
 
 plt.figure(figsize=(100, 60))
 
@@ -63,6 +67,10 @@ plt.ylabel('π')
 
 plt.scatter([x for x in GENERATIONS],[x for x in Heteroz],s=100)
 plt.plot([x for x in GENERATIONS],[x for x in Heteroz])
+
+# If we want to see pop size as well!
+# plt.scatter([x for x in GENERATIONS],[x for x in POPSIZE],s=100,color='red')
+# plt.plot([x for x in GENERATIONS],[x for x in POPSIZE ],color='red')
 
 plt.show()
 
