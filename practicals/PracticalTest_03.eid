@@ -172,10 +172,10 @@ i2.setInteractionFunction("n", 1.0, S2/3);
 	
 	
 /////mutations	/////for now all are neutral
-initializeMutationTypeNuc("m1", 0.5, "f", 0.0);         // non-coding	
-initializeMutationTypeNuc("m2", 0.5, "f", 0.0);         // synonymous	
-initializeMutationTypeNuc("m3", 0.5, "f", 0.0);         // deleterious	
-initializeMutationTypeNuc("m4", 0.5, "f", 0.0);         // beneficial	
+initializeMutationTypeNuc("m1", 0.0, "f", 0.0);         // non-coding	
+initializeMutationTypeNuc("m2", 0.0, "f", 0.0);         // synonymous	
+initializeMutationTypeNuc("m3", 0.0, "f", 0.0);         // deleterious	
+initializeMutationTypeNuc("m4", 0.0, "f", 0.0);         // beneficial	
 
 	
 	
@@ -438,13 +438,13 @@ print(paste(c('Memory (MB): ',usage()),'\t'));
 
 
 
-1:20000 late(){ ///&&&&&&&&&& plotting, map value changing and other stuff  &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+1:55000 late(){ ///&&&&&&&&&& plotting, map value changing and other stuff  &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 GEN=sim.generation;
 i2.evaluate();
 DECREASE_TIMER=100;
-START_DEC=10000;
-START_INC=11000;
+START_DEC=50000;
+START_INC=51000;
 
 	if ( (GEN%DECREASE_TIMER==0) & (p1.getValue("REP")<=3) & ( GEN < START_INC ) & ( GEN>= (START_DEC+DECREASE_TIMER) ) )
 	{////////////// Moving into inner row of matrix //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -455,15 +455,15 @@ START_INC=11000;
 	}/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-	if( (GEN%(DECREASE_TIMER/10)==0) & (p1.getValue("REP")<=3) & ( GEN < START_INC ) & ( GEN>= START_DEC ) )
+	if( (GEN%(DECREASE_TIMER/100)==0) & (p1.getValue("REP")<=3) & ( GEN < START_INC ) & ( GEN>= START_DEC ) )
 	{//////////////// Changing values of row(layer) /////////////////////////////////
 		
 		REPO=p1.getValue("REP");
 		Li = p1.getValue("L");
-		Li[(REPO*10):((REPO*10)+9)]=(Li[(REPO*10):((REPO*10)+9)])-0.1;
-		Li[((99-(REPO*10))-9):(99-(REPO*10))]=(Li[((99-(REPO*10))-9):(99-(REPO*10))])-0.1;
-		Li[seq(((REPO*10)+REPO),99,10)]=(Li[seq(((REPO*10)+REPO),99,10)])-0.1;
-		Li[seq(9+((10*REPO)-REPO),99,10)]=(Li[seq(9+((10*REPO)-REPO),99,10)])-0.1;
+		Li[(REPO*10):((REPO*10)+9)]=(Li[(REPO*10):((REPO*10)+9)])-0.01;
+		Li[((99-(REPO*10))-9):(99-(REPO*10))]=(Li[((99-(REPO*10))-9):(99-(REPO*10))])-0.01;
+		Li[seq(((REPO*10)+REPO),99,10)]=(Li[seq(((REPO*10)+REPO),99,10)])-0.01;
+		Li[seq(9+((10*REPO)-REPO),99,10)]=(Li[seq(9+((10*REPO)-REPO),99,10)])-0.01;
 		Zeroz=which(Li<0.1); /// Get rid of The 1.38778e-16 BUG + anything that is <0
 		Li[Zeroz]=0;
 
@@ -474,7 +474,11 @@ START_INC=11000;
 		
 	}/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
+	if (GEN==50000)
+	{
+	sim.outputFull(filePath='BurnInFileOut');
+	sim.simulationFinished();
+	}
 
 
 	if ( ( GEN%DECREASE_TIMER==0 ) & ( p1.getValue("REP")>=0 ) &  ( GEN>=(START_INC+DECREASE_TIMER) ) )
@@ -486,15 +490,15 @@ START_INC=11000;
 
 	}/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	if ( ( GEN%(DECREASE_TIMER/10)==0 ) & ( p1.getValue("REP")>=0 ) &  ( GEN>=START_INC ) )
+	if ( ( GEN%(DECREASE_TIMER/100)==0 ) & ( p1.getValue("REP")>=0 ) &  ( GEN>=START_INC ) )
 	{
 		Li = p1.getValue("L");
 		REPO=p1.getValue("REP");
 		
-		Li[((REPO*10)+REPO):((REPO*10)+9-REPO)]=Li[((REPO*10)+REPO):((REPO*10)+9-REPO)]+0.1;
-		Li[((99-(REPO*10))-9+REPO):((99-(REPO*10))-REPO)]=Li[((99-(REPO*10))-9+REPO):((99-(REPO*10))-REPO)]+0.1;
-		Li[seq(((REPO*10)+REPO),99-((REPO*10)+REPO),10)]=Li[seq(((REPO*10)+REPO),99-((REPO*10)+REPO),10)]+0.1;
-		Li[seq(9+((10*REPO)-REPO),99-(9+((10*REPO)-REPO)),10)]=Li[seq(9+((10*REPO)-REPO),99-(9+((10*REPO)-REPO)),10)]+0.1;
+		Li[((REPO*10)+REPO):((REPO*10)+9-REPO)]=Li[((REPO*10)+REPO):((REPO*10)+9-REPO)]+0.01;
+		Li[((99-(REPO*10))-9+REPO):((99-(REPO*10))-REPO)]=Li[((99-(REPO*10))-9+REPO):((99-(REPO*10))-REPO)]+0.01;
+		Li[seq(((REPO*10)+REPO),99-((REPO*10)+REPO),10)]=Li[seq(((REPO*10)+REPO),99-((REPO*10)+REPO),10)]+0.01;
+		Li[seq(9+((10*REPO)-REPO),99-(9+((10*REPO)-REPO)),10)]=Li[seq(9+((10*REPO)-REPO),99-(9+((10*REPO)-REPO)),10)]+0.01;
 		
 		
 		Onez=which(Li>0.9); /// Get rid of The 1.38778e-16 BUG + anything that is <0

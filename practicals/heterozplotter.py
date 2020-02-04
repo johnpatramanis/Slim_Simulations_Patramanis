@@ -27,6 +27,7 @@ args = parser.parse_args()
 
 Hetero_title=args.hetero[0]
 Heteroz=[]
+Heterozvar=[]
 GENERATIONS=[]
 POPSIZE=[]
 
@@ -41,7 +42,12 @@ for rep in range(0,NUMBEROFREPS):
         Heterohere.append(float(line.strip()))
     GENERATIONS.append(Heterohere[-2])
     POPSIZE.append(Heterohere[-1])
+    
     Heterohere=Heterohere[:-2] 
+    
+    Heterozvarhere=np.std(Heterohere)
+    Heterozvar.append(Heterozvarhere)
+    
     Heterohere=np.mean(Heterohere)
     Heteroz.append(Heterohere)
     FILE.close()
@@ -54,24 +60,38 @@ for rep in range(0,NUMBEROFREPS):
 
 # colorz=['b' for x in range(0,len(POSITIONS))] 
 
-POPSIZE=[(x* 10**(-8)) for x in POPSIZE]
-
-plt.figure(figsize=(100, 60))
-
-plt.ylim(0,max(Heteroz)*1.5)
-
-plt.title('π through generations')
-plt.xlabel('Generation')
-plt.ylabel('π')
+# POPSIZE=[(x* 10**(-8)) for x in POPSIZE]
 
 
-plt.scatter([x for x in GENERATIONS],[x for x in Heteroz],s=100)
-plt.plot([x for x in GENERATIONS],[x for x in Heteroz])
+
+plt, axs = plt.subplots(2)
+
+# plt.ylim(0,max(Heteroz)*1.5)
+
+# plt.title('π through generations')
+# plt.xlabel('Generation')
+# plt.ylabel('π')
+
+
+
+axs[0].plot(GENERATIONS,Heteroz,label='π')
+axs[0].plot(GENERATIONS,Heterozvar,label='StdDev')
+axs[0].set( ylabel='π and StdDev')
+axs[0].legend()
+
+axs[1].plot(GENERATIONS,POPSIZE)
+axs[1].set(xlabel='Generations', ylabel='Population Size')
+# plt.show()
+plt.savefig('line_plot.pdf') 
 
 # If we want to see pop size as well!
-# plt.scatter([x for x in GENERATIONS],[x for x in POPSIZE],s=100,color='red')
-# plt.plot([x for x in GENERATIONS],[x for x in POPSIZE ],color='red')
+# plt.scatter(GENERATIONS,POPSIZE,s=10,color='red')
+# plt.plot(GENERATIONS,POPSIZE,color='red')
 
-plt.show()
+
+
+
+
+# plt.show()
 
 
