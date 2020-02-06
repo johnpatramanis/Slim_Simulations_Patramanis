@@ -253,11 +253,13 @@ defineConstant("ranges", file3); //for later use
 
 1 early() {
 	
-sim.addSubpop("p1", 300);
 
+system("rm -rf Hetero_Bottle_*",wait=T);
+
+sim.readFromPopulationFile('BurnInFileOut');
+setSeed(rdunif(1, 0, asInteger(2^32) - 1));	
 p1.setSpatialBounds(c(0,0,1.0,1.0));
 
-p1.individuals.setSpatialPosition(p1.pointUniform(300));
 sim.setValue("pdfOpened", F);
 
 // runif(25, 0, 1)
@@ -455,7 +457,7 @@ START_INC=51000;
 	}/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-	if( (GEN%(DECREASE_TIMER/100)==0) & (p1.getValue("REP")<=3) & ( GEN < START_INC ) & ( GEN>= START_DEC ) )
+	if( (GEN%(DECREASE_TIMER/10)==0) & (p1.getValue("REP")<=3) & ( GEN < START_INC ) & ( GEN>= START_DEC ) )
 	{//////////////// Changing values of row(layer) /////////////////////////////////
 		
 		REPO=p1.getValue("REP");
@@ -477,7 +479,6 @@ START_INC=51000;
 	if (GEN==50000)
 	{
 	sim.outputFull(filePath='BurnInFileOut');
-
 	}
 
 
@@ -597,18 +598,18 @@ START_INC=51000;
 
 		mysamples = INDS; ////select random individuals for calcs
 
-		deleteFile(paste(c('Hetero_',asString(OUT_HERE)),''));////get rid of prev runs file
+		deleteFile(paste(c('Hetero_Bottle_',asString(OUT_HERE)),''));////get rid of prev runs file
 		
 		for (WINDOW in MY_WINDOWS[seq(0,size(MY_WINDOWS)-2,1)])
 			{ ////go through windows
 
 			HETERO=sampleHeterozygosityWindow(mysamples,WINDOW,WINDOW+LENGTH_OF_WINDOW); ////calc heterozy
-			writeFile(paste(c('Hetero_',asString(OUT_HERE)),''),asString(HETERO),append=T); /////write it out in our file
+			writeFile(paste(c('Hetero_Bottle_',asString(OUT_HERE)),''),asString(HETERO),append=T); /////write it out in our file
 		
 			}
 			
-		writeFile(paste(c('Hetero_',asString(OUT_HERE)),''),asString(GEN),append=T);
-		writeFile(paste(c('Hetero_',asString(OUT_HERE)),''),asString(p1.individualCount),append=T);
+		writeFile(paste(c('Hetero_Bottle_',asString(OUT_HERE)),''),asString(GEN),append=T);
+		writeFile(paste(c('Hetero_Bottle_',asString(OUT_HERE)),''),asString(p1.individualCount),append=T);
 		
 		p1.setValue("OUT",OUT_HERE+1); ///// renew value for next print
 		

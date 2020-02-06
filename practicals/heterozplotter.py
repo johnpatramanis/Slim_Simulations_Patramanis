@@ -31,7 +31,7 @@ Heterozvar=[]
 GENERATIONS=[]
 POPSIZE=[]
 
-NUMBEROFREPS= len(glob.glob('./{}*'.format(args.hetero[0])))
+NUMBEROFREPS= len(glob.glob('./{}[0-9]*'.format(args.hetero[0])))
 print (NUMBEROFREPS)
 
 for rep in range(0,NUMBEROFREPS):
@@ -52,6 +52,30 @@ for rep in range(0,NUMBEROFREPS):
     Heteroz.append(Heterohere)
     FILE.close()
 
+NUMBEROFREPS= len(glob.glob('./{}Bottle_[0-9]*'.format(args.hetero[0])))
+print (NUMBEROFREPS)
+
+if NUMBEROFREPS!=0:
+    for rep in range(0,NUMBEROFREPS):
+        Heterohere=[]
+        FILE=open('Hetero_Bottle_'+str(rep),'r')
+        print('reading File number {}'.format(rep))
+        
+        for line in FILE:
+            Heterohere.append(float(line.strip()))
+        GENERATIONS.append(Heterohere[-2])
+        print(Heterohere[-2])
+        POPSIZE.append(Heterohere[-1])
+        
+        Heterohere=Heterohere[:-2] 
+        
+        Heterozvarhere=np.std(Heterohere)
+        Heterozvar.append(Heterozvarhere)
+        
+        Heterohere=np.mean(Heterohere)
+        Heteroz.append(Heterohere)
+        
+        FILE.close()
 
 
 # print(Heteroz)
