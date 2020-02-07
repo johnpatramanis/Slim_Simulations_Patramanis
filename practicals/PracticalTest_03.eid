@@ -129,6 +129,20 @@ defineConstant("rho_file_in", "RecombFile.txt");
 defineConstant("coord_file_in","GCF_000247815.1_FicAlb1.5_genomic.gff_for_SLiM.txt");
 
 
+
+paramtersfile = readFile('Parameters_File.txt');
+
+defineConstant("ID", paramtersfile[0]);
+defineConstant("Capacity_Multiplier", asFloat(paramtersfile[1]));	
+defineConstant("Start_DEC", asFloat(paramtersfile[2]));	
+defineConstant("Start_INC", asFloat(paramtersfile[3]));	
+defineConstant("Big_Timer", asFloat(paramtersfile[4]));	
+defineConstant("Small_Timer", asFloat(paramtersfile[5]));	
+
+
+
+
+
 rho_file = readFile(rho_file_in);
 
 
@@ -263,10 +277,13 @@ sim.setValue("pdfOpened", F);
 // runif(25, 0, 1)
 // seq(0, 1, length=9)
 
+// defineConstant("ID", paramtersfile[0]);
+
+
 defineConstant("mapValues", rep(1.0,100));        ////////////// Create X values to be used in the map
 p1.setValue("L", mapValues);     ///// List of map values
 p1.setValue("REP", 0);           ///// Used for changing Enviromenet
-p1.setValue("ENV_CAP",sum(mapValues)*10);    ////Capacity of population size
+p1.setValue("ENV_CAP",sum(mapValues)*Capacity_Multiplier);    ////Capacity of population size
 p1.setValue("OUT",0);   //// Used for outputing files 
 
 p1.setValue("LEN_WINDOW",100000);  ////length of window we want to do calculations/metrics on
@@ -438,15 +455,14 @@ print(paste(c('Memory (MB): ',usage()),'\t'));
 
 
 
-1:55000 late(){ ///&&&&&&&&&& plotting, map value changing and other stuff  &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+1:2600 late(){ ///&&&&&&&&&& plotting, map value changing and other stuff  &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 GEN=sim.generation;
 i2.evaluate();
-DECREASE_TIMER=100;
-START_DEC=50000;
-START_INC=51000;
 
-	if ( (GEN%DECREASE_TIMER==0) & (p1.getValue("REP")<=3) & ( GEN < START_INC ) & ( GEN>= (START_DEC+DECREASE_TIMER) ) )
+
+
+	if ( (GEN%Big_Timer==0) & (p1.getValue("REP")<=3) & ( GEN < Start_INC ) & ( GEN>= (Start_DEC+Big_Timer) ) )
 	{////////////// Moving into inner row of matrix //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		REPO=p1.getValue("REP");
@@ -455,21 +471,27 @@ START_INC=51000;
 	}/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-	if( (GEN%(DECREASE_TIMER/100)==0) & (p1.getValue("REP")<=3) & ( GEN < START_INC ) & ( GEN>= START_DEC ) )
+	if( (GEN%Small_Timer==0) & (p1.getValue("REP")<=3) & ( GEN < Start_INC ) & ( GEN>= Start_DEC ) )
 	{//////////////// Changing values of row(layer) /////////////////////////////////
 		
-		REPO=p1.getValue("REP");
+		REPZ=p1.getValue("REP");
 		Li = p1.getValue("L");
-		Li[(REPO*10):((REPO*10)+9)]=(Li[(REPO*10):((REPO*10)+9)])-0.01;
-		Li[((99-(REPO*10))-9):(99-(REPO*10))]=(Li[((99-(REPO*10))-9):(99-(REPO*10))])-0.01;
-		Li[seq(((REPO*10)+REPO),99,10)]=(Li[seq(((REPO*10)+REPO),99,10)])-0.01;
-		Li[seq(9+((10*REPO)-REPO),99,10)]=(Li[seq(9+((10*REPO)-REPO),99,10)])-0.01;
-		Zeroz=which(Li<0.1); /// Get rid of The 1.38778e-16 BUG + anything that is <0
-		Li[Zeroz]=0;
+		Li=matrix(Li,10,10);
+		
+		for ( REPO in 0:REPZ )
+		{ 
+			Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]=Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]-0.01;		
+			Li[REPO:(ncol(Li)-(1+REPO)),REPO]=Li[REPO:(ncol(Li)-(1+REPO)),REPO]-0.01;			
+			Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]=Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]-0.01;			
+			Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]=Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]-0.01;
+			
 
+			Zeroz=which(Li<0.1); /// Get rid of The 1.38778e-16 BUG + anything that is <0
+			Li[Zeroz]=0;
+		}
 		p1.defineSpatialMap("map1", "xy", c(10, 10), Li, interpolate=T,valueRange=c(0.0, 1.0), colors=c("black", "white"));
 		p1.setValue("L", Li);
-		p1.setValue("ENV_CAP",sum(Li)*10);
+		p1.setValue("ENV_CAP",sum(Li)*Capacity_Multiplier);
 		print(matrix(Li,10,10));
 		
 	}/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -481,7 +503,7 @@ START_INC=51000;
 	}
 
 
-	if ( ( GEN%DECREASE_TIMER==0 ) & ( p1.getValue("REP")>=0 ) &  ( GEN>=(START_INC+DECREASE_TIMER) ) )
+	if ( ( GEN%Big_Timer==0 ) & ( p1.getValue("REP")>=0 ) &  ( GEN>=(Start_INC) ) )
 	{////////////// Map Values changing (plus) ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		REPO=p1.getValue("REP");
@@ -490,23 +512,28 @@ START_INC=51000;
 
 	}/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	if ( ( GEN%(DECREASE_TIMER/100)==0 ) & ( p1.getValue("REP")>=0 ) &  ( GEN>=START_INC ) )
+	if ( ( GEN%Small_Timer==0 ) & ( p1.getValue("REP")>=0 ) &  ( GEN>=Start_INC ) )
 	{
 		Li = p1.getValue("L");
-		REPO=p1.getValue("REP");
+		Li=matrix(Li,10,10);
+		REPZ=p1.getValue("REP");
 		
-		Li[((REPO*10)+REPO):((REPO*10)+9-REPO)]=Li[((REPO*10)+REPO):((REPO*10)+9-REPO)]+0.01;
-		Li[((99-(REPO*10))-9+REPO):((99-(REPO*10))-REPO)]=Li[((99-(REPO*10))-9+REPO):((99-(REPO*10))-REPO)]+0.01;
-		Li[seq(((REPO*10)+REPO),99-((REPO*10)+REPO),10)]=Li[seq(((REPO*10)+REPO),99-((REPO*10)+REPO),10)]+0.01;
-		Li[seq(9+((10*REPO)-REPO),99-(9+((10*REPO)-REPO)),10)]=Li[seq(9+((10*REPO)-REPO),99-(9+((10*REPO)-REPO)),10)]+0.01;
-		
-		
-		Onez=which(Li>0.9); /// Get rid of The 1.38778e-16 BUG + anything that is <0
-		Li[Onez]=1;
+		for ( REPO in REPZ:3 )
+		{ 
+			Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]=Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]+0.01;		
+			Li[REPO:(ncol(Li)-(1+REPO)),REPO]=Li[REPO:(ncol(Li)-(1+REPO)),REPO]+0.01;			
+			Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]=Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]+0.01;			
+			Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]=Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]+0.01;
+			
+
+			Onez=which(Li>0.9); /// Get rid of The 1.38778e-16 BUG + anything that is <0
+			Li[Onez]=1;
+		}
+
 		
 		p1.defineSpatialMap("map1", "xy", c(10, 10), Li, interpolate=T,valueRange=c(0.0, 1.0), colors=c("black", "white"));
 		p1.setValue("L", Li);
-		p1.setValue("ENV_CAP",sum(Li)*10);
+		p1.setValue("ENV_CAP",sum(Li)*Capacity_Multiplier);
 		print(matrix(Li,10,10));
 		
 	}
@@ -523,7 +550,7 @@ START_INC=51000;
 
 
 
-	// if (GEN%50==0 & GEN>=START_INC & GEN<=START_DEC)
+	// if (GEN%50==0 & GEN>=Start_INC & GEN<=Start_DEC)
 	// {///////////// Live plotting of positions //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		// P1pos=cbind(p1.individuals.x,p1.individuals.y); ///grab the positions
@@ -572,7 +599,7 @@ START_INC=51000;
 
 
 
-	if ( (GEN>=0 & GEN%250==0) | (GEN>=START_DEC & GEN%2==0 & GEN<=(START_DEC+3*(DECREASE_TIMER)))  )///when to make matrics//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	if ( (GEN>=0 & GEN%250==0) | (GEN>=Start_DEC & GEN%2==0 & GEN<=(Start_DEC+3*(Big_Timer)))  )///when to make matrics//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	{
 		OUT_HERE=p1.getValue("OUT");   /// Output file name indicator
 		
