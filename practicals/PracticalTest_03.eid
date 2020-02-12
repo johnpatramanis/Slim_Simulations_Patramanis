@@ -132,12 +132,16 @@ defineConstant("coord_file_in","GCF_000247815.1_FicAlb1.5_genomic.gff_for_SLiM.t
 
 paramtersfile = readFile('Parameters_File.txt');
 
-defineConstant("ID", paramtersfile[0]);
+defineConstant("ID", paste(strsplit(paramtersfile[0],'')[0:(length(strsplit(paramtersfile[0],''))-2)],''));
 defineConstant("Capacity_Multiplier", asFloat(paramtersfile[1]));	
 defineConstant("Start_DEC", asFloat(paramtersfile[2]));	
 defineConstant("Start_INC", asFloat(paramtersfile[3]));	
 defineConstant("Big_Timer", asFloat(paramtersfile[4]));	
 defineConstant("Small_Timer", asFloat(paramtersfile[5]));	
+defineConstant("decrease_amount", asFloat(paramtersfile[6]));	
+defineConstant("competition_radius", asFloat(paramtersfile[7]));	
+defineConstant("mating_radius", asFloat(paramtersfile[8]));	
+
 
 
 
@@ -175,11 +179,11 @@ defineConstant("start", clock());	////to track time
 	
 	
 /// Set up an interaction for spatial competition
-initializeInteractionType(1, "xy", reciprocal=T, maxDistance=S1); /////interaction ID, dimentions , reciprocal=T=interaction of a to = interactions of b to a, max distance of effect
-i1.setInteractionFunction("n", 1.0 , S1/3);	
+initializeInteractionType(1, "xy", reciprocal=T, maxDistance=competition_radius); /////interaction ID, dimentions , reciprocal=T=interaction of a to = interactions of b to a, max distance of effect
+i1.setInteractionFunction("n", 1.0 , competition_radius/3);	
 	
-initializeInteractionType(2, "xy", reciprocal=T, maxDistance=S2);
-i2.setInteractionFunction("n", 1.0, S2/3);	
+initializeInteractionType(2, "xy", reciprocal=T, maxDistance=mating_radius);
+i2.setInteractionFunction("n", 1.0, mating_radius/3);	
 	
 	
 	
@@ -455,7 +459,7 @@ print(paste(c('Memory (MB): ',usage()),'\t'));
 
 
 
-1:2600 late(){ ///&&&&&&&&&& plotting, map value changing and other stuff  &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+1:55000 late(){ ///&&&&&&&&&& plotting, map value changing and other stuff  &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 GEN=sim.generation;
 i2.evaluate();
@@ -471,7 +475,7 @@ i2.evaluate();
 	}/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-	if( (GEN%Small_Timer==0) & (p1.getValue("REP")<=3) & ( GEN < Start_INC ) & ( GEN>= Start_DEC ) )
+	if( (GEN%Small_Timer==0) & sum(p1.getValue("L")) > 4 & ( GEN < Start_INC ) & ( GEN>= Start_DEC ) )
 	{//////////////// Changing values of row(layer) /////////////////////////////////
 		
 		REPZ=p1.getValue("REP");
@@ -480,10 +484,10 @@ i2.evaluate();
 		
 		for ( REPO in 0:REPZ )
 		{ 
-			Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]=Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]-0.01;		
-			Li[REPO:(ncol(Li)-(1+REPO)),REPO]=Li[REPO:(ncol(Li)-(1+REPO)),REPO]-0.01;			
-			Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]=Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]-0.01;			
-			Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]=Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]-0.01;
+			Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]=Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))] - decrease_amount;		
+			Li[REPO:(ncol(Li)-(1+REPO)),REPO]=Li[REPO:(ncol(Li)-(1+REPO)),REPO] - decrease_amount;			
+			Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]=Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))] - decrease_amount;			
+			Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]=Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)] - decrease_amount;
 			
 
 			Zeroz=which(Li<0.1); /// Get rid of The 1.38778e-16 BUG + anything that is <0
@@ -503,7 +507,7 @@ i2.evaluate();
 	}
 
 
-	if ( ( GEN%Big_Timer==0 ) & ( p1.getValue("REP")>=0 ) &  ( GEN>=(Start_INC) ) )
+	if ( ( GEN%Big_Timer==0 ) & ( p1.getValue("REP")>0 ) &  ( GEN>=(Start_INC) ) )
 	{////////////// Map Values changing (plus) ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		REPO=p1.getValue("REP");
@@ -512,18 +516,18 @@ i2.evaluate();
 
 	}/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	if ( ( GEN%Small_Timer==0 ) & ( p1.getValue("REP")>=0 ) &  ( GEN>=Start_INC ) )
+	if ( ( GEN%Small_Timer==0 ) & (sum(p1.getValue("L")) < 100) &  ( GEN>=Start_INC ) )
 	{
 		Li = p1.getValue("L");
 		Li=matrix(Li,10,10);
 		REPZ=p1.getValue("REP");
 		
-		for ( REPO in REPZ:3 )
+		for ( REPO in REPZ:4 )
 		{ 
-			Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]=Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]+0.01;		
-			Li[REPO:(ncol(Li)-(1+REPO)),REPO]=Li[REPO:(ncol(Li)-(1+REPO)),REPO]+0.01;			
-			Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]=Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]+0.01;			
-			Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]=Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]+0.01;
+			Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]=Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))] + decrease_amount;		
+			Li[REPO:(ncol(Li)-(1+REPO)),REPO]=Li[REPO:(ncol(Li)-(1+REPO)),REPO] + decrease_amount;			
+			Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]=Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))] + decrease_amount;			
+			Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]=Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)] + decrease_amount;
 			
 
 			Onez=which(Li>0.9); /// Get rid of The 1.38778e-16 BUG + anything that is <0
@@ -624,18 +628,18 @@ i2.evaluate();
 
 		mysamples = INDS; ////select random individuals for calcs
 
-		deleteFile(paste(c('Hetero_',asString(OUT_HERE)),''));////get rid of prev runs file
+		deleteFile(paste(c('Hetero_',asString(ID),asString(OUT_HERE)),'')); ////get rid of prev runs file
 		
 		for (WINDOW in MY_WINDOWS[seq(0,size(MY_WINDOWS)-2,1)])
 			{ ////go through windows
 
 			HETERO=sampleHeterozygosityWindow(mysamples,WINDOW,WINDOW+LENGTH_OF_WINDOW); ////calc heterozy
-			writeFile(paste(c('Hetero_',asString(OUT_HERE)),''),asString(HETERO),append=T); /////write it out in our file
+			writeFile(paste(c('Hetero_',asString(ID),asString(OUT_HERE)),''),asString(HETERO),append=T); /////write it out in our file
 		
 			}
 			
-		writeFile(paste(c('Hetero_',asString(OUT_HERE)),''),asString(GEN),append=T);
-		writeFile(paste(c('Hetero_',asString(OUT_HERE)),''),asString(p1.individualCount),append=T);
+		writeFile(paste(c('Hetero_',ID,asString(OUT_HERE)),''),asString(GEN),append=T);
+		writeFile(paste(c('Hetero_',ID,asString(OUT_HERE)),''),asString(p1.individualCount),append=T);
 		
 		p1.setValue("OUT",OUT_HERE+1); ///// renew value for next print
 		

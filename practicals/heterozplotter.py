@@ -21,6 +21,8 @@ from sklearn.manifold import TSNE
 parser = argparse.ArgumentParser()
 parser.add_argument('--hetero',nargs='+',type=str)
 
+parser.add_argument('--zoom',nargs='+',type=str)
+
 
 
 args = parser.parse_args()
@@ -87,30 +89,79 @@ if NUMBEROFREPS!=0:
 # POPSIZE=[(x* 10**(-8)) for x in POPSIZE]
 
 
+if args.zoom:
+    
+    Start=int(args.zoom[0])
+    End=int(args.zoom[1])
+    print(Start,End)
+    
+    for x,y in enumerate(GENERATIONS):
+        print(x,y)
+        if y == Start:
+            Start=x
+        if y == End:
+            End=x
+    
+    print(Start,End)
+    
+    Heteroz=Heteroz[Start:End]
+    Heterozvar=Heterozvar[Start:End]
+    POPSIZE=POPSIZE[Start:End]
+    GENERATIONS=GENERATIONS[Start:End]
+    
+    
+    plt, axs = plt.subplots(2)
 
-plt, axs = plt.subplots(2)
+    # plt.ylim(0,max(Heteroz)*1.5)
 
-# plt.ylim(0,max(Heteroz)*1.5)
-
-# plt.title('π through generations')
-# plt.xlabel('Generation')
-# plt.ylabel('π')
+    # plt.title('π through generations')
+    # plt.xlabel('Generation')
+    # plt.ylabel('π')
 
 
 
-axs[0].plot(GENERATIONS,Heteroz,label='π')
-axs[0].plot(GENERATIONS,Heterozvar,label='StdDev')
-axs[0].set( ylabel='π and StdDev')
-axs[0].legend()
+    axs[0].plot(GENERATIONS,Heteroz,label='π')
+    axs[0].plot(GENERATIONS,Heterozvar,label='StdDev')
+    axs[0].set( ylabel='π and StdDev')
+    axs[0].legend()
 
-axs[1].plot(GENERATIONS,POPSIZE)
-axs[1].set(xlabel='Generations', ylabel='Population Size')
-# plt.show()
-plt.savefig('line_plot.pdf') 
+    axs[1].plot(GENERATIONS,POPSIZE)
+    axs[1].set(xlabel='Generations', ylabel='Population Size')
+    # plt.show()
+    plt.savefig('line_plot.pdf') 
 
-# If we want to see pop size as well!
-# plt.scatter(GENERATIONS,POPSIZE,s=10,color='red')
-# plt.plot(GENERATIONS,POPSIZE,color='red')
+    # If we want to see pop size as well!
+    # plt.scatter(GENERATIONS,POPSIZE,s=10,color='red')
+    # plt.plot(GENERATIONS,POPSIZE,color='red')
+
+
+
+
+
+else:
+    plt, axs = plt.subplots(2)
+
+    # plt.ylim(0,max(Heteroz)*1.5)
+
+    # plt.title('π through generations')
+    # plt.xlabel('Generation')
+    # plt.ylabel('π')
+
+
+
+    axs[0].plot(GENERATIONS,Heteroz,label='π')
+    axs[0].plot(GENERATIONS,Heterozvar,label='StdDev')
+    axs[0].set( ylabel='π and StdDev')
+    axs[0].legend()
+
+    axs[1].plot(GENERATIONS,POPSIZE)
+    axs[1].set(xlabel='Generations', ylabel='Population Size')
+    # plt.show()
+    plt.savefig('line_plot.pdf') 
+
+    # If we want to see pop size as well!
+    # plt.scatter(GENERATIONS,POPSIZE,s=10,color='red')
+    # plt.plot(GENERATIONS,POPSIZE,color='red')
 
 
 
