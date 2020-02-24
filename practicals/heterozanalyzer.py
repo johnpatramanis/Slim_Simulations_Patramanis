@@ -7,6 +7,7 @@ import re
 import random
 import math
 import sys
+import statsmodels.api as sm 
 import argparse
 from multiprocessing import Process,Manager
 import matplotlib
@@ -15,6 +16,7 @@ from sklearn.decomposition import PCA
 import umap
 from sklearn.linear_model import LinearRegression
 from sklearn.manifold import TSNE
+
 
 #python3 heterozplotter.py --hetero Hetero_
 
@@ -91,6 +93,7 @@ if NUMBEROFREPS!=0:
 
 if args.zoom:
     
+    
     Start=int(args.zoom[0])
     End=int(args.zoom[1])
     print(Start,End)
@@ -101,7 +104,6 @@ if args.zoom:
         if y == End:
             End=x
     
-    print(Start,End)
     
     Heteroz=Heteroz[Start:End]
     Heterozvar=Heterozvar[Start:End]
@@ -111,74 +113,49 @@ if args.zoom:
     InitSize=POPSIZE[0]
     for j,k in enumerate(POPSIZE):
         if k<=InitSize*0.05:
-            Endpoint=j
+            Endpoint=j+100
             break
         else:
             Endpoint=len(POPSIZE)
     
-    #################### FOR POPULATION SIZE SLOPE CALCS ##########################################
-    X = np.array(POPSIZE[:Endpoint]).reshape((-1, 1))
-    Y = np.array(GENERATIONS[:Endpoint])
-    Z = np.array(Heteroz[:Endpoint]).reshape((-1, 1))
-    
-    
-    model = LinearRegression()
-    model.fit(X, Y)
-    r_sq = model.score(X, Y)
-    
-    LINE_PRED=model.predict(X)
-    
-    print('coefficient of determination:', r_sq)
-    print('intercept:', model.intercept_)
-    print('slope:', model.coef_)
-    
-    
-    #################### FOR PI SLOPE CALCS ##########################################
-    
-    model2 = LinearRegression()
-    model2.fit(Z, Y)
-    r_sq2 = model2.score(Z, Y)
-    
-    LINE_PRED2=model2.predict(Z)
-    
-    print('coefficient of determination:', r_sq2)
-    print('intercept:', model2.intercept_)
-    print('slope:', model2.coef_)
+    Heteroz=Heteroz[:Endpoint]
+    Heterozvar=Heterozvar[:Endpoint]
+    POPSIZE=POPSIZE[:Endpoint]
+    GENERATIONS=GENERATIONS[:Endpoint]
     
     
     
+    lowess = sm.nonparametric.lowess
     
+    X = np.array(Heteroz) ##.reshape((-1, 1))
+    X2= np.array(Heterozvar)
+    Y = np.array(GENERATIONS)
     
-    
-    
+    Z = lowess(X, Y , frac=0.2,it=0)
+    W = lowess(X2, Y , frac=0.2,it=0)
     
     
     plt, axs = plt.subplots(2)
-
-    # plt.ylim(0,max(Heteroz)*1.5)
-
-    # plt.title('π through generations')
-    # plt.xlabel('Generation')
-    # plt.ylabel('π')
-
-
-    
     axs[0].plot(GENERATIONS,Heteroz,label='π')
-    axs[0].plot(LINE_PRED2,Heteroz[:Endpoint],label='π Slope',color='red')
     axs[0].plot(GENERATIONS,Heterozvar,label='StdDev')
-    # axs[0].text(60100,np.median(Heteroz[:Endpoint]),"Slope Coef: {} \n Intersept: {} \n Score: {}".format(model2.coef_[0],model2.intercept_,r_sq2),fontsize=10)
+    axs[0].plot([ x[0] for x in Z ],[ x[1] for x in Z ],color='red')
+    axs[0].plot([ x[0] for x in W ],[ x[1] for x in W ],color='purple')
+    # axs[0].scatter(np.mean(Y),mean2,color='red',s=20)
+    
+    # axs[0].plot(LINE_PRED3,Heterozvar[BEGIN:Endpoint],color='purple')
+    # axs[0].scatter(np.mean(Y),mean3,color='purple',s=20)
+            
+
+
     axs[0].set( ylabel='π and StdDev')
-    axs[0].set(title='{}'.format(args.hetero[0]))
-    axs[0].legend()
-    
-    
+    axs[0].set( title='{}'.format(args.hetero[0]))
+    axs[0].legend()        
+           
     axs[1].plot(GENERATIONS,POPSIZE)
-    axs[1].plot(LINE_PRED,POPSIZE[:Endpoint],color='red')
-    axs[1].text(60100,np.mean(POPSIZE[:Endpoint]),"Slope Coef: {} \n Intersept: {} \n Score: {}".format(model.coef_[0],model.intercept_,r_sq),fontsize=10)
     axs[1].set(xlabel='Generations', ylabel='Population Sizez')
     # plt.show()
-    plt.savefig('Zoomed_{}.pdf'.format(args.hetero[0])) 
-
+    plt.savefig('Binned_{}.pdf'.format(args.hetero[0])) 
+    
     # If we want to see pop size as well!
     # plt.scatter(GENERATIONS,POPSIZE,s=10,color='red')
     # plt.plot(GENERATIONS,POPSIZE,color='red')
@@ -197,7 +174,7 @@ else:
     # plt.ylabel('π')
 
 
-    axs[0].set(title='{}'.format(args.hetero[0]))
+
     axs[0].plot(GENERATIONS,Heteroz,label='π')
     axs[0].plot(GENERATIONS,Heterozvar,label='StdDev')
     axs[0].set( ylabel='π and StdDev')
@@ -206,7 +183,7 @@ else:
     axs[1].plot(GENERATIONS,POPSIZE)
     axs[1].set(xlabel='Generations', ylabel='Population Size')
     # plt.show()
-    plt.savefig('Overall_{}.pdf'.format(args.hetero[0])) 
+    plt.savefig('line_plot.pdf') 
 
     # If we want to see pop size as well!
     # plt.scatter(GENERATIONS,POPSIZE,s=10,color='red')
