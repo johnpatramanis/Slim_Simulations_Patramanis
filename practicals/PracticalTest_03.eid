@@ -270,7 +270,11 @@ defineConstant("ranges", file3); //for later use
 
 
 1 early() {
-	
+
+
+
+
+
 sim.addSubpop("p1", 300);
 
 p1.setSpatialBounds(c(0,0,1.0,1.0));
@@ -459,11 +463,10 @@ print(paste(c('Memory (MB): ',usage()),'\t'));
 
 
 
-1:55000 late(){ ///&&&&&&&&&& plotting, map value changing and other stuff  &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+1:65000 late(){ ///&&&&&&&&&& plotting, map value changing and other stuff  &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 GEN=sim.generation;
 i2.evaluate();
-
 
 
 	if ( (GEN%Big_Timer==0) & (p1.getValue("REP")<=3) & ( GEN < Start_INC ) & ( GEN>= (Start_DEC+Big_Timer) ) )
@@ -500,7 +503,7 @@ i2.evaluate();
 		
 	}/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	if (GEN==50000)
+	if (GEN==60000)
 	{
 	sim.outputFull(filePath='BurnInFileOut');
 
@@ -603,7 +606,7 @@ i2.evaluate();
 
 
 
-	if ( (GEN>=0 & GEN%250==0) | (GEN>=Start_DEC & GEN%2==0 & GEN<=(Start_DEC+3*(Big_Timer)))  )///when to make matrics//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	if ( (GEN>=0 & GEN%250==0) | ( (GEN>=Start_DEC) & (GEN%2==0) & (GEN<=(Start_INC-200)) )  )///when to make matrics//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	{
 		OUT_HERE=p1.getValue("OUT");   /// Output file name indicator
 		
