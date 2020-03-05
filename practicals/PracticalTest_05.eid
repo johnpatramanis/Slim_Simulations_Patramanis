@@ -20,7 +20,7 @@ function (f$)genomicHeterozygosity(o<Genome>$ genome1, o<Genome>$ genome2) //// 
 	muts1 = genome1.mutations;
 	muts2 = genome2.mutations;
 	unshared = setSymmetricDifference(muts1, muts2);
-	pi = size(unshared) / L;
+	pi = size(unshared) / Length;
 	return pi;
 }
 
@@ -469,7 +469,7 @@ early() {
 
 
 
-	if ( (GEN>=0 & GEN%250==0) | ( (GEN>=Start_DEC) & (GEN%2==0) & (GEN<=(Start_INC-200)) ) )///when to make matrics//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	if ( (GEN>=0 & GEN%250==0) | ( (GEN>=Start_DEC) & (GEN%2==0) & (GEN<=(Start_INC+200)) ) )///when to make matrics//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	{
 		OUT_HERE=p1.getValue("OUT");   /// Output file name indicator
 		

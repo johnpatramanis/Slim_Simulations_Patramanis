@@ -20,7 +20,7 @@ function (f$)genomicHeterozygosity(o<Genome>$ genome1, o<Genome>$ genome2) //// 
 	muts1 = genome1.mutations;
 	muts2 = genome2.mutations;
 	unshared = setSymmetricDifference(muts1, muts2);
-	pi = size(unshared) / L;
+	pi = size(unshared) / Length;
 	return pi;
 }
 
@@ -271,6 +271,7 @@ defineConstant("Start_INC", asFloat(paramtersfile[3]));
 defineConstant("Big_Timer", asFloat(paramtersfile[4]));	
 defineConstant("Small_Timer", asFloat(paramtersfile[5]));	
 defineConstant("decrease_amount", asFloat(paramtersfile[6]));	
+defineConstant("RGSV", strsplit(asString(paramtersfile[7]),' '));	////RSV = Random Grid Shutdown Vector
 
 if (exists("slimgui")){
 defineConstant("sigma", 0.1);	
@@ -364,8 +365,8 @@ reproduction() {
 	defineConstant("pdfPath", writeTempFile("plot_", ".pdf", "")); ////used to init plotting	
 	sim.setValue("pdfOpened", F);  ////////used to init plotting
 	deleteFile("positions.txt");  ////get rid previous runs
-	deleteFile(paste(c('Hetero_',asString(ID),asString(sigma)),''));	
-	
+	deleteFile(paste(c('Hetero_',asString(ID),'Random_',asString(PERCENTAGE),'_Sigma_',asString(sigma)),''));	
+
 	
     i1.evaluate();
 }
@@ -443,9 +444,8 @@ early() {
 
 
 
-	if ( (GEN>=0 & GEN%250==0) | ( (GEN>=Start_DEC) & (GEN%2==0) & (GEN<=(Start_INC-200)) ) )///when to make matrics//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	if ( (GEN>=0 & GEN%250==0) | ( (GEN>=Start_DEC) & (GEN%2==0) & (GEN<=(Start_INC+200)) ) )///when to make matrics//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	{
-		OUT_HERE=p1.getValue("OUT");   /// Output file name indicator
 		
 		
 
@@ -470,11 +470,9 @@ early() {
 
 		HETERO=subpopHeterozygosity(p1,size(mysamples)); ////calc heterozy
 		HETEROSD=subpopHeterozygositystd(p1,size(mysamples));
-		writeFile(paste(c('Hetero_',asString(ID),asString(sigma)),''),paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount)),'\t'),append=T); /////write it out in our file
+		writeFile(paste(c('Hetero_',asString(ID),'Random_',asString(PERCENTAGE),'_Sigma_',asString(sigma)),''),paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount)),'\t'),append=T); /////write it out in our file
 
-			
-		p1.setValue("OUT",OUT_HERE+1); ///// renew value for next print
-		
+					
 	}////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
