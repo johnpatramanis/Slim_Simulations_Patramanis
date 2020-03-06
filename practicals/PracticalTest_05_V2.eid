@@ -20,7 +20,7 @@ function (f$)genomicHeterozygosity(o<Genome>$ genome1, o<Genome>$ genome2) //// 
 	muts1 = genome1.mutations;
 	muts2 = genome2.mutations;
 	unshared = setSymmetricDifference(muts1, muts2);
-	pi = size(unshared) / L;
+	pi = size(unshared) / Length;
 	return pi;
 }
 
@@ -262,7 +262,7 @@ initialize() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	///////////////////////////////////////////////////////////////// 
 	////PARAMS
-paramtersfile = readFile('Parameters_File_V2.txt');
+paramtersfile = readFile('Parameters_File.txt');
 
 defineConstant("ID", paste(strsplit(paramtersfile[0],'')[0:(length(strsplit(paramtersfile[0],''))-2)],''));
 defineConstant("Capacity_Multiplier", asFloat(paramtersfile[1]));
@@ -317,8 +317,34 @@ reproduction() {
     mate = i2.drawByStrength(individual, 1);
     if (mate.size()) {
         nOff = rpois(1, FECUN);
-        for (i in seqLen(nOff)) {
-            pos = individual.spatialPosition + rnorm(2, 0, SD);
+		POS=individual.spatialPosition; //// position of birther
+		CircleOfPositions=c(c(SD,0),c(SD,SD),c(0,SD),c(-SD,SD),c(-SD,0),c(-SD,-SD),c(0,-SD),c(SD,-SD));  //// 8 points around individual at SD distance
+
+        for (i in seqLen(nOff)) {			
+			
+			Choices=c();
+			
+			for (x in seq(1,length(CircleOfPositions),2)){
+				
+				CIRCLEHERE=c(CircleOfPositions[x-1],CircleOfPositions[x]);  
+				POSHERE=(POS+CIRCLEHERE);                                    //// Position in circle around individual
+				RESOURCE=p1.spatialMapValue("map1", POSHERE);                //// Resource at position
+				Choices=c(Choices,RESOURCE);	                             //// add it to choice
+
+			}
+
+			BEST=which(Choices==max(Choices));		 //// find best options	
+			if (size(BEST)>1){
+				BEST=sample(BEST,1);	         //// if many
+			}
+			
+			Gamma = rnorm(2, 0, SD);             //// find new position towards the best choice
+			Theta1 = runif(1, -18, 18);          ////  using this equation Xnew = Xold + Gamma*theta
+			Theta2 = runif(1, -18, 18);
+			
+			pos= individual.spatialPosition + c((Gamma[0]*cos(Theta1)),(Gamma[1]*sin(Theta2)));
+
+
             if (p1.pointInBounds(pos)) {
             	offspring = subpop.addCrossed(individual, mate);
           		offspring.setSpatialPosition(pos);
@@ -469,7 +495,7 @@ early() {
 
 
 
-	if ( (GEN>=0 & GEN%250==0) | ( (GEN>=Start_DEC) & (GEN%2==0) & (GEN<=(Start_INC-200)) ) )///when to make matrics//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	if ( (GEN>=0 & GEN%250==0) | ( (GEN>=Start_DEC) & (GEN%2==0) & (GEN<=(Start_INC+200)) ) )///when to make matrics//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	{
 		OUT_HERE=p1.getValue("OUT");   /// Output file name indicator
 		
@@ -511,9 +537,9 @@ print(paste(c('Generation: ',sim.generation),'\t'));
 print(clock());
 print(date());
 print(sigma);
+
+
 }
-
-
 
 
 150000 late() { /////end time
