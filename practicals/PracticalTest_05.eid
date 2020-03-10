@@ -352,13 +352,12 @@ reproduction() {
 	p1.setValue("WINDOWS_XP",seq(0,sim.chromosome.lastPosition,100000));  ///// Split Chromosome into windows and store them
 	
 	
-	p1.defineSpatialMap("map1", "xy", c(10,10), mapValues, interpolate=T,valueRange=c(0.0, 1.0), colors=c("red", "yellow"));   ////set up the background capacity map
+	p1.defineSpatialMap("map1", "xy", c(10,10), mapValues, interpolate=T,valueRange=c(0.0, 1.0), colors=c("black", "white"));   ////set up the background capacity map
 
 	
 	defineConstant("pdfPath", writeTempFile("plot_", ".pdf", "")); ////used to init plotting	
 	sim.setValue("pdfOpened", F);  ////////used to init plotting
-	deleteFile("positions.txt");  ////get rid previous runs
-	deleteFile(paste(c('Hetero_',asString(ID),asString(sigma)),''));	
+	deleteFile(paste(c('Hetero_Sigma_',asString(ID),asString(sigma)),''));	
 	
 	
     i1.evaluate();
@@ -424,6 +423,8 @@ early() {
     	
     }////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+
 	if (GEN==60000)		
 	{	
 	sim.outputFull(filePath='BurnInFileOut');	
@@ -469,6 +470,7 @@ early() {
 
 
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	if ( (GEN>=0 & GEN%250==0) | ( (GEN>=Start_DEC) & (GEN%2==0) & (GEN<=(Start_INC+200)) ) )///when to make matrics//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	{
 		OUT_HERE=p1.getValue("OUT");   /// Output file name indicator
@@ -496,7 +498,10 @@ early() {
 
 		HETERO=subpopHeterozygosity(p1,size(mysamples)); ////calc heterozy
 		HETEROSD=subpopHeterozygositystd(p1,size(mysamples));
-		writeFile(paste(c('Hetero_',asString(ID),asString(sigma)),''),paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount)),'\t'),append=T); /////write it out in our file
+		
+		NEWBORN=which(p1.individuals.age==0);
+		RES=mean(p1.spatialMapValue("map1", p1.individuals[NEWBORN].spatialPosition));
+		writeFile(paste(c('Hetero_Sigma_',asString(ID),asString(sigma)),''),paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount),asString(RES)),'\t'),append=T); /////write it out in our file
 
 			
 		p1.setValue("OUT",OUT_HERE+1); ///// renew value for next print

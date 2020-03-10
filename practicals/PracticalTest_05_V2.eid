@@ -318,8 +318,11 @@ reproduction() {
     if (mate.size()) {
         nOff = rpois(1, FECUN);
 		POS=individual.spatialPosition; //// position of birther
+		
 		CircleOfPositions=c(c(SD,0),c(SD,SD),c(0,SD),c(-SD,SD),c(-SD,0),c(-SD,-SD),c(0,-SD),c(SD,-SD));  //// 8 points around individual at SD distance
+		AngleOfPositions=c(0,45,90,135,180,225,270,315);
 
+		
         for (i in seqLen(nOff)) {			
 			
 			Choices=c();
@@ -335,20 +338,22 @@ reproduction() {
 
 			BEST=which(Choices==max(Choices));		 //// find best options	
 			if (size(BEST)>1){
-				BEST=sample(BEST,1);	         //// if many
+				BEST=sample(BEST,1);	         //// if more than one 
 			}
 			
-			Gamma = rnorm(2, 0, SD);             //// find new position towards the best choice
-			Theta1 = runif(1, -18, 18);          ////  using this equation Xnew = Xold + Gamma*theta
-			Theta2 = runif(1, -18, 18);
+			Gamma = rnorm(1, 0, SD);             //// find new position towards the best choice
+			Theta1 = runif(1, ( AngleOfPositions[BEST] - 22.5), AngleOfPositions[BEST] + 22.5);          //// using this equation Xnew = Xold + Gamma*theta
 			
-			pos= individual.spatialPosition + c((Gamma[0]*cos(Theta1)),(Gamma[1]*sin(Theta2)));
-
+			pos= POS + c((Gamma*cos(Theta1)),(Gamma*sin(Theta1))); //// the new position
+			// print(c(POS,pos));    ///seems ok
+			
 
             if (p1.pointInBounds(pos)) {
             	offspring = subpop.addCrossed(individual, mate);
           		offspring.setSpatialPosition(pos);
           	}
+			
+			
         }
     }
     return;
@@ -378,13 +383,12 @@ reproduction() {
 	p1.setValue("WINDOWS_XP",seq(0,sim.chromosome.lastPosition,100000));  ///// Split Chromosome into windows and store them
 	
 	
-	p1.defineSpatialMap("map1", "xy", c(10,10), mapValues, interpolate=T,valueRange=c(0.0, 1.0), colors=c("red", "yellow"));   ////set up the background capacity map
+	p1.defineSpatialMap("map1", "xy", c(10,10), mapValues, interpolate=T,valueRange=c(0.0, 1.0), colors=c("black", "white"));   ////set up the background capacity map
 
 	
 	defineConstant("pdfPath", writeTempFile("plot_", ".pdf", "")); ////used to init plotting	
 	sim.setValue("pdfOpened", F);  ////////used to init plotting
-	deleteFile("positions.txt");  ////get rid previous runs
-	deleteFile(paste(c('Hetero_',asString(ID),asString(sigma)),''));	
+	deleteFile(paste(c('Hetero_Mod_Mvm_Sigma_',asString(ID),asString(sigma)),''));	
 	
 	
     i1.evaluate();
@@ -522,8 +526,11 @@ early() {
 
 		HETERO=subpopHeterozygosity(p1,size(mysamples)); ////calc heterozy
 		HETEROSD=subpopHeterozygositystd(p1,size(mysamples));
-		writeFile(paste(c('Hetero_',asString(ID),asString(sigma)),''),paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount)),'\t'),append=T); /////write it out in our file
-
+		NEWBORN=which(p1.individuals.age==0);
+		RES=mean(p1.spatialMapValue("map1", p1.individuals[NEWBORN].spatialPosition));
+		
+		
+		writeFile(paste(c('Hetero_Mod_Mvm_Sigma_',asString(ID),asString(sigma)),''),paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount),asString(RES)),'\t'),append=T); /////write it out in our file
 			
 		p1.setValue("OUT",OUT_HERE+1); ///// renew value for next print
 		
@@ -537,8 +544,6 @@ print(paste(c('Generation: ',sim.generation),'\t'));
 print(clock());
 print(date());
 print(sigma);
-
-
 }
 
 

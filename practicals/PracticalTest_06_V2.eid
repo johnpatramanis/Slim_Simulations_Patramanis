@@ -327,12 +327,43 @@ reproduction() {
     mate = i2.drawByStrength(individual, 1);
     if (mate.size()) {
         nOff = rpois(1, FECUN);
-        for (i in seqLen(nOff)) {
-            pos = individual.spatialPosition + rnorm(2, 0, SD);
+		POS=individual.spatialPosition; //// position of birther
+		
+		CircleOfPositions=c(c(SD,0),c(SD,SD),c(0,SD),c(-SD,SD),c(-SD,0),c(-SD,-SD),c(0,-SD),c(SD,-SD));  //// 8 points around individual at SD distance
+		AngleOfPositions=c(0,45,90,135,180,225,270,315);
+
+		
+        for (i in seqLen(nOff)) {			
+			
+			Choices=c();
+			
+			for (x in seq(1,length(CircleOfPositions),2)){
+				
+				CIRCLEHERE=c(CircleOfPositions[x-1],CircleOfPositions[x]);  
+				POSHERE=(POS+CIRCLEHERE);                                    //// Position in circle around individual
+				RESOURCE=p1.spatialMapValue("map1", POSHERE);                //// Resource at position
+				Choices=c(Choices,RESOURCE);	                             //// add it to choice
+
+			}
+
+			BEST=which(Choices==max(Choices));		 //// find best options	
+			if (size(BEST)>1){
+				BEST=sample(BEST,1);	         //// if more than one 
+			}
+			
+			Gamma = rnorm(1, 0, SD);             //// find new position towards the best choice
+			Theta1 = runif(1, ( AngleOfPositions[BEST] - 22.5), AngleOfPositions[BEST] + 22.5);          //// using this equation Xnew = Xold + Gamma*theta
+			
+			pos= POS + c((Gamma*cos(Theta1)),(Gamma*sin(Theta1))); //// the new position
+			// print(c(POS,pos));    ///seems ok
+			
+
             if (p1.pointInBounds(pos)) {
             	offspring = subpop.addCrossed(individual, mate);
           		offspring.setSpatialPosition(pos);
           	}
+			
+			
         }
     }
     return;
@@ -371,7 +402,7 @@ reproduction() {
 	defineConstant("pdfPath", writeTempFile("plot_", ".pdf", "")); ////used to init plotting	
 	sim.setValue("pdfOpened", F);  ////////used to init plotting
 	deleteFile("positions.txt");  ////get rid previous runs
-	deleteFile(paste(c('Hetero_',asString(ID),'Random_SHUT','_Sigma_',asString(sigma)),''));	
+	deleteFile(paste(c('Hetero_',asString(ID),'Random_SHUT_Mod_Mvm','_Sigma_',asString(sigma)),''));	
 
 	
     i1.evaluate();
@@ -515,8 +546,7 @@ early() {
 		NEWBORN=which(p1.individuals.age==0);
 		RES=mean(p1.spatialMapValue("map1", p1.individuals[NEWBORN].spatialPosition));
 		
-		
-		writeFile(paste(c('Hetero_',asString(ID),'Random_SHUT','_Sigma_',asString(sigma)),''),paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount),asString(RES)),'\t'),append=T); /////write it out in our file
+		writeFile(paste(c('Hetero_',asString(ID),'Random_SHUT_Mod_Mvm','_Sigma_',asString(sigma)),''),paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount),asString(RES)),'\t'),append=T); /////write it out in our file
 
 					
 	}////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
