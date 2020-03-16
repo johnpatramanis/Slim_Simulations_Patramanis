@@ -1,0 +1,7 @@
+stage	start	end	outN	scale	outFreq
+burnin	1	397	10	20	44
+s50K_1M	398	561	10	20	18
+s1K_50K	569	653	20	2	4
+s100_1K	658	661	20	1	0
+s100	661	662	1	1	NA
+mark1K	658	0	0	0	NA
