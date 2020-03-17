@@ -64,8 +64,34 @@ function(f$)CompareIndividuals(o<Individual>$ ind1, o<Individual>$ ind2)
 }
 
 
-// function(f$)CalculateBoxGeneticSimilarity()
+function(f$)CalculateBoxGeneticSimilarity(o<Subpopulation>$ pop1)
+{
+	AssignBoxes(pop1);
+	GeneticDiversity=NULL;
+	INDS=pop1.individuals;
+	BoxesWithInds=NULL;
+	for (x in (seq(0,99))){  ///// Find which boxes have an individual in
+				
+		if (size(which(INDS.tag==x))!=0){
+		BoxesWithInds=c(BoxesWithInds,x);	
 
+		}
+	}
+	
+	for (x in BoxesWithInds){
+		for (y in BoxesWithInds){
+			
+			IND1=INDS[sample(which(INDS.tag==x),1)];
+			IND2=INDS[sample(which(INDS.tag==y),1)];
+			GeneticDiversity=c(GeneticDiversity,CompareIndividuals(IND1,IND2));
+		
+	
+		}
+	}
+
+	
+	return mean(GeneticDiversity);
+}
 
 
 
@@ -573,9 +599,7 @@ print(clock());
 print(date());
 print(sigma);
 print(p1.getValue("SHUT_GRIDS"));
-print(AssignBoxes(p1));
-CompareIndividuals(p1.individuals[0],p1.individuals[1]);
-
+print(CalculateBoxGeneticSimilarity(p1));
 }
 
 
