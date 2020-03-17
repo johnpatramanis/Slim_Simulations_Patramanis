@@ -29,7 +29,7 @@ function (f$)AssignBoxes(o<Subpopulation>$ subpop1 )
 {
 	POSITIONS=subpop1.individuals.spatialPosition;  ////get positions of individuals
 	CoordToBoxes=matrix(seq(0,99,1),10,10);    //// method to transform x,y coordinates to a box integer in a 10 x 10 grid
-	Tagz=p1.getValue('Tagz');
+	Tagz=NULL;
 	for (x in (seq(1.0,10.0,1)) ) {          //// cycle through all 10 x 10 boxes
 		for (y in(seq(1.0,10.0,1)) ) {
 			
@@ -37,7 +37,6 @@ function (f$)AssignBoxes(o<Subpopulation>$ subpop1 )
 			for (z in (seq(1,length(POSITIONS),2))){   //// cycle through all individual positions
 				
 				if ((x-1<=POSITIONS[z-1]) & (y-1<=POSITIONS[z]) & (x>POSITIONS[z-1]) & (y>POSITIONS[z]) ){
-					// subpop1.individuals[IndCounter].tag=CoordToBoxes[x-1,y-1];
 					Tagz=c(Tagz,CoordToBoxes[x-1,y-1]);
 					}
 				
@@ -48,11 +47,24 @@ function (f$)AssignBoxes(o<Subpopulation>$ subpop1 )
 		}
 	}
 
-
-	p1.setValue('Tagz',Tagz);
+	subpop1.individuals.tag=Tagz;
 	return NULL;
 }
 
+
+function(f$)CompareIndividuals(o<Individual>$ ind1, o<Individual>$ ind2)
+{
+	AllMuts=sim.mutations;
+	IND1=asInteger(ind1.genome1.containsMutations(AllMuts)) + asInteger(ind1.genome2.containsMutations(AllMuts));
+	IND2=asInteger(ind2.genome1.containsMutations(AllMuts)) + asInteger(ind2.genome2.containsMutations(AllMuts));
+	
+	SIMILARITY=abs(IND1-IND2);
+	
+	return asFloat(sum(SIMILARITY)/Length);
+}
+
+
+// function(f$)CalculateBoxGeneticSimilarity()
 
 
 
@@ -561,8 +573,9 @@ print(clock());
 print(date());
 print(sigma);
 print(p1.getValue("SHUT_GRIDS"));
-p1.setValue('Tagz',NULL);
 print(AssignBoxes(p1));
+CompareIndividuals(p1.individuals[0],p1.individuals[1]);
+
 }
 
 
