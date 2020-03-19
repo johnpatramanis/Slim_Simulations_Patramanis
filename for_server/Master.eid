@@ -299,9 +299,16 @@ paramtersfile = readFile('Parameters_File.txt');
 
 	
 	defineConstant("RGSV", asInteger(strsplit(asString(paramtersfile[7]),' ')));	////RSV = Random Grid Shutdown Vector
+	
+	if (exists('PERCENTAGE')==0){
 	defineConstant("PERCENTAGE", asFloat(paramtersfile[8]));	////RSV = Random Grid Shutdown Vector	
+	}
 	defineConstant("LAYERS",asInteger(strsplit(asString(paramtersfile[9]),' ')));   //// How many
+	
+	if (exists('MODE')==0){
 	defineConstant("MODE",asString(paramtersfile[10]));
+	}
+	
 	
 	defineConstant('OUT_NAME',paste(c('Hetero_',asString(ID),'Random_SHUT_Mod_Mvm','_Sigma_',asString(sigma),'_LAYERS_',MAX_TICKS,'_PERCENTAGE_',PERCENTAGE),'')); ///Output name
 
@@ -485,7 +492,7 @@ early() {
 
 
 
-	if (GEN==60000)		
+	if (GEN==120000)		
 	{	
 	sim.outputFull(filePath='BurnInFileOut');	
 		
@@ -561,9 +568,9 @@ early() {
 		
 		writeFile(OUT_NAME,paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount),asString(RES)),'\t'),append=T); /////write it out in our file
 		deleteFile(paste(c(OUT_NAME,asString(GEN),'.vcf'),'_'));
-		p1.outputVCFSample(sampleSize=length(INDS),replace=F,filePath = paste(c(OUT_NAME,asString(GEN),'.vcf'),'_'));
+		INDS.genomes.outputVCF(filePath = paste(c(OUT_NAME,asString(GEN),'.vcf'),'_'),simplifyNucleotides = F);
 		deleteFile(paste(c(OUT_NAME,asString(GEN),'.pos'),'_'));
-		writeFile(paste(c(OUT_NAME,asString(GEN),'.pos'),'_'),asString(p1.individuals.spatialPosition));
+		writeFile(paste(c(OUT_NAME,asString(GEN),'.pos'),'_'),asString(INDS.spatialPosition));  ////  x and y positions
 					
 	}////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -582,4 +589,7 @@ print(p1.getValue("SHUT_GRIDS"));
 
 
 500 late() { /////end time
+
+///// zip position and vcf files!
+writeFile(OUT_NAME,paste(c(asString(p1.getValue("SHUT_GRIDS"))),'\t'),append=T);
 }

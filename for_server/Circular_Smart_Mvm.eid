@@ -532,9 +532,10 @@ early() {
 		
 		writeFile(OUT_NAME,paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount),asString(RES)),'\t'),append=T); /////write it out in our file
 		deleteFile(paste(c(OUT_NAME,asString(GEN),'.vcf'),'_'));
-		p1.outputVCFSample(sampleSize=length(INDS),replace=F,filePath = paste(c(OUT_NAME,asString(GEN),'.vcf'),'_'));
+		INDS.genomes.outputVCF(filePath = paste(c(OUT_NAME,asString(GEN),'.vcf'),'_'),simplifyNucleotides = F);
 		deleteFile(paste(c(OUT_NAME,asString(GEN),'.pos'),'_'));
-		writeFile(paste(c(OUT_NAME,asString(GEN),'.pos'),'_'),asString(p1.individuals.spatialPosition));	
+		writeFile(paste(c(OUT_NAME,asString(GEN),'.pos'),'_'),asString(INDS.spatialPosition));  ////  x and y positions
+		
 		
 	}////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
