@@ -298,7 +298,13 @@ paramtersfile = readFile('Parameters_File.txt');
 
 
 	
-	defineConstant("RGSV", asInteger(strsplit(asString(paramtersfile[7]),' ')));	////RSV = Random Grid Shutdown Vector
+	
+	
+	
+	
+	
+	
+	
 	
 	if (exists('PERCENTAGE')==0){
 	defineConstant("PERCENTAGE", asFloat(paramtersfile[8]));	////RSV = Random Grid Shutdown Vector	
@@ -308,6 +314,12 @@ paramtersfile = readFile('Parameters_File.txt');
 	if (exists('MODE')==0){
 	defineConstant("MODE",asString(paramtersfile[10]));
 	}
+	
+	
+	
+	defineConstant("RGSV", asInteger(strsplit(asString(paramtersfile[7]),' ')));	////RSV = Random Grid Shutdown Vector
+	
+	
 	
 	
 	defineConstant('OUT_NAME',paste(c('Hetero_',asString(ID),'Random_SHUT_Mod_Mvm','_Sigma_',asString(sigma),'_LAYERS_',MAX_TICKS,'_PERCENTAGE_',PERCENTAGE),'')); ///Output name
@@ -566,12 +578,43 @@ early() {
 		NEWBORN=which(p1.individuals.age==0);
 		RES=mean(p1.spatialMapValue("map1", p1.individuals[NEWBORN].spatialPosition));
 		
+		
 		writeFile(OUT_NAME,paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount),asString(RES)),'\t'),append=T); /////write it out in our file
-		deleteFile(paste(c(OUT_NAME,asString(GEN),'.vcf'),'_'));
+		
+		
+		deleteFile(paste(c(OUT_NAME,asString(GEN),'.vcf'),'_')); ///// Delete previous vcf,gz,tbi file with same name if exist then output vcf,zip it and tabulate it
+		deleteFile(paste(c(OUT_NAME,asString(GEN),'.vcf.gz'),'_'));
+		deleteFile(paste(c(OUT_NAME,asString(GEN),'.vcf.tbi'),'_'));
 		INDS.genomes.outputVCF(filePath = paste(c(OUT_NAME,asString(GEN),'.vcf'),'_'),simplifyNucleotides = F);
-		deleteFile(paste(c(OUT_NAME,asString(GEN),'.pos'),'_'));
-		writeFile(paste(c(OUT_NAME,asString(GEN),'.pos'),'_'),asString(INDS.spatialPosition));  ////  x and y positions
-					
+		system(paste(c("bgzip",paste(c(OUT_NAME,asString(GEN),'.vcf'),'_'))," "));	
+		system(paste(c("tabix -p vcf",paste(c(OUT_NAME,asString(GEN),'.vcf.gz'),'_'))," "));	
+		
+		
+		///////////////////////////////////////////////////// for all individuals in pop
+		
+		deleteFile(paste(c(OUT_NAME,asString(GEN),'.all_pos'),'_')); ///// do the same with positions
+		ALLPOS=NULL;
+		
+		for (INDHERE in p1.individuals){ /// costly in time
+		ALLPOS=c(ALLPOS,paste(c(asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'));	
+			 // writeFile(paste(c(OUT_NAME,asString(GEN),'.all_pos'),'_'),paste(c(asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'),append=T);  ////  x and y positions
+		}
+		writeFile(paste(c(OUT_NAME,asString(GEN),'.all_pos'),'_'),paste(ALLPOS,'\n'));
+		
+		
+		//////////////////////////////////////////////////// for individuals sampled for vcf file
+		
+		
+		deleteFile(paste(c(OUT_NAME,asString(GEN),'.sampled_pos'),'_'));
+		SAMPLEPOS=NULL;
+		
+		for (INDHERE in INDS){ ///// not so much
+		SAMPLEPOS=c(SAMPLEPOS,paste(c(asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'));	
+			 // writeFile(paste(c(OUT_NAME,asString(GEN),'.sampled_pos'),'_'),paste(c(asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'),append=T);  ////  x and y positions
+		}
+		writeFile(paste(c(OUT_NAME,asString(GEN),'.sampled_pos'),'_'),paste(SAMPLEPOS,'\n'));
+
+		
 	}////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -588,8 +631,8 @@ print(p1.getValue("SHUT_GRIDS"));
 
 
 
-500 late() { /////end time
-
+102 late() { /////end time
+// print(system(paste(c("bgzip",)," ")));
 ///// zip position and vcf files!
 writeFile(OUT_NAME,paste(c(asString(p1.getValue("SHUT_GRIDS"))),'\t'),append=T);
 }
