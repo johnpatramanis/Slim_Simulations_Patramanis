@@ -316,9 +316,47 @@ paramtersfile = readFile('Parameters_File.txt');
 	}
 	
 	
+	/////////////// MODE SELECTION
+	/////////////// SELECT WHICH WAY THE COLLAPSE IS GONNA HAPPEN
 	
-	defineConstant("RGSV", asInteger(strsplit(asString(paramtersfile[7]),' ')));	////RSV = Random Grid Shutdown Vector
+	if (MODE=='P') {
+		
+		defineConstant("RGSV", asInteger(strsplit(asString(paramtersfile[7]),' ')));	////RSV = Random Grid Shutdown Vector
+		defineConstant('KEYWORD','PAR_INPUT');
+	}
 	
+	
+	if (MODE=='R') {
+		
+		RandomSample=sample(seq(0,99),99,replace=F);	
+		defineConstant("RGSV", RandomSample);	////RSV = Random Grid Shutdown Vector
+		defineConstant('KEYWORD','RANDOM_SHUT');
+	}
+	
+	
+	
+	if (MODE=='C') {
+		
+		GRIDS=NULL;		
+		for ( REPO in 0:4 )
+		{   
+	        Li=matrix(rep(1,100),10,10);
+    		Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]=0;		
+    		Li[REPO:(ncol(Li)-(1+REPO)),REPO]=0;			
+    		Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]=0;			
+    		Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]=0;
+			
+			ToAdd=which(Li==0);
+			Shuffled=sample(ToAdd,length(ToAdd),replace=F);
+
+			GRIDS=c(GRIDS,Shuffled);
+    	}
+		
+
+		defineConstant("RGSV", GRIDS);	////RSV = Random Grid Shutdown Vector
+		defineConstant('KEYWORD','CIRCULAR');
+	}
+	///////////////////////////////////////////////////////////////////////////////////////////////	
 	
 	
 	
