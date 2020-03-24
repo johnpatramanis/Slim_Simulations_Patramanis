@@ -360,9 +360,30 @@ paramtersfile = readFile('Parameters_File.txt');
 	
 	if (MODE=='E'){
 		
+		PickInit=NULL;
 		GRIDS=NULL;
 		Li=matrix(rep(1,100),10,10);
-		Li[c(99,98,89,88)]=0;
+		REPO=0;
+		Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]=0;
+		PickInit=c(PickInit,which(Li==0));
+		Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]=1;
+		
+		Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]=0;
+		PickInit=c(PickInit,which(Li==0));
+		Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]=1;
+		
+		Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]=0;
+		PickInit=c(PickInit,rev(which(Li==0)));
+		Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]=1;
+		
+		Li[REPO:(ncol(Li)-(1+REPO)),REPO]=0;
+		PickInit=c(PickInit,rev(which(Li==0)));		
+		Li[REPO:(ncol(Li)-(1+REPO)),REPO]=1;
+
+		Start=sample(seq(0,length(PickInit)-4),1);
+		PickInit=PickInit[seq(Start,Start+3)];
+
+		Li[PickInit]=0;
 		ToAdd=which(Li==0);
 		GRIDS=c(GRIDS,ToAdd);
 		while (sum(Li)>0){
@@ -432,8 +453,7 @@ paramtersfile = readFile('Parameters_File.txt');
 		
 		
 		
-	
-	defineConstant("RGSV", GRIDS);	////RSV = Random Grid Shutdown Vector
+	defineConstant("RGSV", unique(GRIDS));	////RSV = Random Grid Shutdown Vector
 	defineConstant('KEYWORD','PERIFERAL');
 	}
 	
@@ -604,7 +624,6 @@ early() {
 		REPZ=p1.getValue("REP");
         p1.setValue("SHUT_GRIDS",RGSV[0:LAYERS[REPZ]]);
 		SHUT_GRIDS=p1.getValue("SHUT_GRIDS");
-        print(SHUT_GRIDS);
 
 		
 		Li = p1.getValue("L");
@@ -652,7 +671,6 @@ early() {
 		REPZ=p1.getValue("REP");
         p1.setValue("SHUT_GRIDS",RGSV[LAYERS[REPZ]:99]);
 		SHUT_GRIDS=p1.getValue("SHUT_GRIDS");
-        print(SHUT_GRIDS);
     	Li = p1.getValue("L");
 		
 		Li[SHUT_GRIDS]=Li[SHUT_GRIDS] + decrease_amount;
