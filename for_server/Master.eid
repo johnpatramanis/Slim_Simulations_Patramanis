@@ -426,8 +426,6 @@ paramtersfile = readFile('Parameters_File.txt');
 			
 				}
 			}
-			print(Li);
-			print(GRIDS);
 			Li[MARKED]=0;
 			GRIDS=c(MARKED,GRIDS);
 		}
@@ -523,7 +521,8 @@ reproduction() {
 	sim.simulationFinished();
 	
 	}
-	
+
+	///// check percentage == layers final
 	
 	
 	
