@@ -778,7 +778,7 @@ print(p1.getValue("SHUT_GRIDS"));
 
 
 
-102 late() { /////end time
+500 late() { /////end time
 // print(system(paste(c("bgzip",)," ")));
 ///// zip position and vcf files!
 writeFile(OUT_NAME,paste(c(asString(p1.getValue("SHUT_GRIDS"))),'\t'),append=T);
