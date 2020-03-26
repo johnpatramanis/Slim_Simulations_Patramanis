@@ -262,10 +262,13 @@ initialize() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	///////////////////////////////////////////////////////////////// 
 	////PARAMS
+
 	
-if (exists(paramtersfile)==0){	
 	paramtersfile = readFile('Parameters_File.txt');
-}
+
+	
+	
+	
 	defineConstant("ID", paste(strsplit(paramtersfile[0],'')[0:(length(strsplit(paramtersfile[0],''))-2)],''));
 
 	if (exists("MAX_TICKS")==0){
@@ -462,7 +465,7 @@ if (exists(paramtersfile)==0){
 	
 	
 	
-	defineConstant('OUT_NAME',paste(c('Hetero_',asString(ID),'Random_SHUT_Mod_Mvm','_Sigma_',asString(sigma),'_LAYERS_',MAX_TICKS,'_PERCENTAGE_',PERCENTAGE),'')); ///Output name
+	defineConstant('OUT_NAME',paste(c('Hetero_',asString(ID),'_',KEYWORD,'_Sigma_',asString(sigma),'_LAYERS_',MAX_TICKS,'_PERCENTAGE_',PERCENTAGE),'')); ///Output name
 
 	
     
