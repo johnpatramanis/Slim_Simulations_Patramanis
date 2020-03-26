@@ -262,8 +262,10 @@ initialize() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	///////////////////////////////////////////////////////////////// 
 	////PARAMS
-paramtersfile = readFile('Parameters_File.txt');
-
+	
+if (exists(paramtersfile)==0){	
+	paramtersfile = readFile('Parameters_File.txt');
+}
 	defineConstant("ID", paste(strsplit(paramtersfile[0],'')[0:(length(strsplit(paramtersfile[0],''))-2)],''));
 
 	if (exists("MAX_TICKS")==0){
@@ -387,7 +389,7 @@ paramtersfile = readFile('Parameters_File.txt');
 		ToAdd=which(Li==0);
 		GRIDS=c(GRIDS,ToAdd);
 		while (sum(Li)>0){
-		MARKED=NULL;
+			MARKED=NULL;
 			for (x in seq(0,9)){
 				for (y in seq(0,9)){
 						if (Li[x,y]==0) {
@@ -399,7 +401,6 @@ paramtersfile = readFile('Parameters_File.txt');
 								Li[x+1,y+1]=1;
 							}
 							}
-							
 							
 							if ((x+1<10)){
 								if (Li[x+1,y]!=0){
@@ -536,16 +537,14 @@ reproduction() {
 
 1 early() {
 	
-	if (   (length(LAYERS)<(MAX_TICKS+2))   |   (LAYERS[length(LAYERS)-1]>length(RGSV) )  ){
-	
+	if (   (length(LAYERS)<(MAX_TICKS+2))   |   (LAYERS[length(LAYERS)-1]>length(RGSV) ) | (LAYERS[MAX_TICKS+2]!=PERCENTAGE) ){   /////// FAIL SAFE - STOP RUN
+	print('ERROR: NOT MATCHING number of layers or Percentage is different from Last Layer');
+	print(c('The Layers:',LAYERS,' Number of layers (not including 0)',MAX_TICKS+2,' Percentage of ShutDown',PERCENTAGE,'Final Layer',LAYERS[MAX_TICKS+2]));
 	sim.simulationFinished();
 	
 	}
 
-	///// check percentage == layers final
-	
-	
-	
+
 	
 	
 	
