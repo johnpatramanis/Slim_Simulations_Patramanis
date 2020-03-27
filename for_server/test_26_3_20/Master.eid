@@ -161,6 +161,8 @@ function (f$)sampleHeterozygosityWindow(  * sampledIndividuals , integer$ window
 
 initialize() {
 	
+	
+	
 	//set up filepaths	
 	defineConstant("mu", 1.67e-09);	
 	defineConstant("CAP", 1500);	
@@ -171,9 +173,10 @@ initialize() {
 	defineConstant("rho_file_in", "RecombFile.txt");
 	defineConstant("coord_file_in","GCF_000247815.1_FicAlb1.5_genomic.gff_for_SLiM.txt");
 
-
-
-
+	
+	if (exists("seed")==1){
+		setSeed(asInteger(seed)); ///// set //random seed
+		}
 
 	rho_file = readFile(rho_file_in);
 
@@ -191,8 +194,6 @@ initialize() {
 	
 
 
-	//random seed
-	setSeed(rdunif(1, 0, asInteger(2^32) - 1));	
 	defineConstant("start", clock());	////to track time	
 		
 		
