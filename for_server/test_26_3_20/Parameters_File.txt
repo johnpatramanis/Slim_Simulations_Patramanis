@@ -1,5 +1,5 @@
 Smoother_Collapse_
-3
+2
 120000
 130000
 100
