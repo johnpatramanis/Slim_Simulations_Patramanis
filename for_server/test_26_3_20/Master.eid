@@ -480,7 +480,7 @@ initialize() {
 	
 	
 	
-	defineConstant('OUT_NAME',paste(c('Hetero_',asString(ID),'_',KEYWORD,'_Sigma_',asString(sigma),'_LAYERS_',MAX_TICKS,'_PERCENTAGE_',PERCENTAGE),'')); ///Output name
+	defineConstant('OUT_NAME',paste(c('Hetero_',asString(ID),KEYWORD,'_Sigma_',asString(sigma),'_LAYERS_',MAX_TICKS,'_PERCENTAGE_',PERCENTAGE),'')); ///Output name
 
 	
     
@@ -761,40 +761,40 @@ early() {
 		RES=mean(p1.spatialMapValue("map1", p1.individuals[NEWBORN].spatialPosition));
 		
 		
-		writeFile(OUT_NAME,paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount),asString(RES)),'\t'),append=T); /////write it out in our file
+		writeFile(OUT_NAME+'_timeline.txt',paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount),asString(RES)),'\t'),append=T); /////write it out in our file
 		
 		
-		deleteFile(paste(c(OUT_NAME,asString(GEN),'.vcf'),'_')); ///// Delete previous vcf,gz,tbi file with same name if exist then output vcf,zip it and tabulate it
-		deleteFile(paste(c(OUT_NAME,asString(GEN),'.vcf.gz'),'_'));
-		deleteFile(paste(c(OUT_NAME,asString(GEN),'.vcf.tbi'),'_'));
-		INDS.genomes.outputVCF(filePath = paste(c(OUT_NAME,asString(GEN),'.vcf'),'_'),simplifyNucleotides = F);
-		system(paste(c("bgzip",paste(c(OUT_NAME,asString(GEN),'.vcf'),'_'))," "));	
-		system(paste(c("tabix -p vcf",paste(c(OUT_NAME,asString(GEN),'.vcf.gz'),'_'))," "));	
+		deleteFile(paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.vcf'); ///// Delete previous vcf,gz,tbi file with same name if exist then output vcf,zip it and tabulate it
+		deleteFile(paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.vcf.gz');
+		deleteFile(paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.vcf.tbi');
+		INDS.genomes.outputVCF(filePath = paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.vcf',simplifyNucleotides = F);
+		system(paste(c("bgzip",paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.vcf')," "));	
+		system(paste(c("tabix -p vcf",paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.vcf.gz')," "));	
 		
 		
 		///////////////////////////////////////////////////// for all individuals in pop
 		
-		deleteFile(paste(c(OUT_NAME,asString(GEN),'.all_pos'),'_')); ///// do the same with positions
+		deleteFile(paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.all_pos'); ///// do the same with positions
 		ALLPOS=NULL;
 		
 		for (INDHERE in p1.individuals){ /// costly in time
 		ALLPOS=c(ALLPOS,paste(c(asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'));	
 			 // writeFile(paste(c(OUT_NAME,asString(GEN),'.all_pos'),'_'),paste(c(asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'),append=T);  ////  x and y positions
 		}
-		writeFile(paste(c(OUT_NAME,asString(GEN),'.all_pos'),'_'),paste(ALLPOS,'\n'));
+		writeFile(paste(c(OUT_NAME,asString(GEN)),'_')+'.all_pos',paste(ALLPOS,'\n'));
 		
 		
 		//////////////////////////////////////////////////// for individuals sampled for vcf file
 		
 		
-		deleteFile(paste(c(OUT_NAME,asString(GEN),'.sampled_pos'),'_'));
+		deleteFile(paste(c(OUT_NAME,asString(GEN)),'_')+'.sampled_pos');
 		SAMPLEPOS=NULL;
 		
 		for (INDHERE in INDS){ ///// not so much
 		SAMPLEPOS=c(SAMPLEPOS,paste(c(asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'));	
 			 // writeFile(paste(c(OUT_NAME,asString(GEN),'.sampled_pos'),'_'),paste(c(asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'),append=T);  ////  x and y positions
 		}
-		writeFile(paste(c(OUT_NAME,asString(GEN),'.sampled_pos'),'_'),paste(SAMPLEPOS,'\n'));
+		writeFile(paste(c(OUT_NAME,asString(GEN)),'_')+'.sampled_pos',paste(SAMPLEPOS,'\n'));
 
 		
 	}////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
