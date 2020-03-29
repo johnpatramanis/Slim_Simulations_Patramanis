@@ -593,8 +593,11 @@ reproduction() {
 	
 	defineConstant("pdfPath", writeTempFile("plot_", ".pdf", "")); ////used to init plotting	
 	sim.setValue("pdfOpened", F);  ////////used to init plotting
-	deleteFile(OUT_NAME);	
 
+	//// prepare output files
+	writeFile(OUT_NAME+'_timeline.txt',paste(c('Mean_Pi','Std_Pi','Generation','Population_Size','Mean_Enviromental_Capacity'),'\t'),append=F);	
+	writeFile(OUT_NAME+'.all_pos',paste(c('Generation','Individual_ID','X_pos','Y_pos','Enviroment_capacity'),'\t'),append=F); 
+	writeFile(OUT_NAME+'.sampled_pos',paste(c('Generation','Individual_ID','X_pos','Y_pos','Enviroment_capacity'),'\t'),append=F); 
 	
     i1.evaluate();
 }
@@ -775,27 +778,26 @@ early() {
 		
 		///////////////////////////////////////////////////// for all individuals in pop
 		
-		deleteFile(paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.all_pos'); ///// do the same with positions
+		///// do the same with positions
 		ALLPOS=NULL;
 		
 		for (INDHERE in p1.individuals){ /// costly in time
-		ALLPOS=c(ALLPOS,paste(c(asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'));	
+		ALLPOS=c(ALLPOS,paste(c(asString(GEN),asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'));	
 			 // writeFile(paste(c(OUT_NAME,asString(GEN),'.all_pos'),'_'),paste(c(asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'),append=T);  ////  x and y positions
 		}
-		writeFile(paste(c(OUT_NAME,asString(GEN)),'_')+'.all_pos',paste(ALLPOS,'\n'));
+		writeFile(OUT_NAME+'.all_pos',paste(ALLPOS,'\n'),append=T);
 		
 		
 		//////////////////////////////////////////////////// for individuals sampled for vcf file
 		
 		
-		deleteFile(paste(c(OUT_NAME,asString(GEN)),'_')+'.sampled_pos');
 		SAMPLEPOS=NULL;
 		
 		for (INDHERE in INDS){ ///// not so much
-		SAMPLEPOS=c(SAMPLEPOS,paste(c(asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'));	
+		SAMPLEPOS=c(SAMPLEPOS,paste(c(asString(GEN),asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'));	
 			 // writeFile(paste(c(OUT_NAME,asString(GEN),'.sampled_pos'),'_'),paste(c(asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'),append=T);  ////  x and y positions
 		}
-		writeFile(paste(c(OUT_NAME,asString(GEN)),'_')+'.sampled_pos',paste(SAMPLEPOS,'\n'));
+		writeFile(OUT_NAME+'.sampled_pos',paste(SAMPLEPOS,'\n'),append=T);
 
 		
 	}////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
