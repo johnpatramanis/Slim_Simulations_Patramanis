@@ -558,7 +558,7 @@ reproduction() {
 	
 	if (   (length(LAYERS)<(MAX_TICKS+2))   |   (LAYERS[length(LAYERS)-1]>length(RGSV) ) | (LAYERS[MAX_TICKS+2]!=PERCENTAGE) ){   /////// FAIL SAFE - STOP RUN
 	print('ERROR: NOT MATCHING number of layers or Percentage is different from Last Layer');
-	print(c('The Layers:',LAYERS,' Number of layers (not including 0)',MAX_TICKS+2,' Percentage of ShutDown',PERCENTAGE,'Final Layer',LAYERS[MAX_TICKS+2]));
+	print(c('The Layers:',LAYERS,' Number of layers (not including 0)',MAX_TICKS+2,' Percentage of ShutDown',PERCENTAGE,'Final Layer',LAYERS[MAX_TICKS+2],'Length of Shutdown',length(RGSV)));
 	sim.simulationFinished();
 	
 	}
