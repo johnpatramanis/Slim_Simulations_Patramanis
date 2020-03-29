@@ -1,0 +1,138 @@
+initialize() {	
+initializeMutationRate(1.67e-09);
+initializeMutationType("m1", 0.0, "f", 0.0); 
+initializeGenomicElementType("g1", m1, 0.5);
+initializeGenomicElement(g1, 0, 100);
+initializeRecombinationRate(1.67e-07);
+
+
+
+//////// Generate Random Sequence		
+		RandomSample=sample(seq(0,99),99,replace=F);	
+		print(RandomSample);
+		writeFile('RANDOM',paste(RandomSample,' '),append=F);
+	
+//////// Generate Circular Sequence
+		GRIDS=NULL;		
+		for ( REPO in 0:4 )
+		{   
+	        Li=matrix(rep(1,100),10,10);
+    		Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]=0;		
+    		Li[REPO:(ncol(Li)-(1+REPO)),REPO]=0;			
+    		Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]=0;			
+    		Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]=0;
+			
+			ToAdd=which(Li==0);
+			Shuffled=sample(ToAdd,length(ToAdd),replace=F);
+
+			GRIDS=c(GRIDS,Shuffled);
+    	}
+		
+		print(GRIDS);
+		writeFile('CIRCULAR',paste(GRIDS,' '),append=F);
+
+
+	
+
+//////// Generate Periferal Sequence
+		PickInit=NULL;
+		GRIDS=NULL;
+		Li=matrix(rep(1,100),10,10);
+		REPO=0;
+		Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]=0;
+		PickInit=c(PickInit,which(Li==0));
+		Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]=1;
+		
+		Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]=0;
+		PickInit=c(PickInit,which(Li==0));
+		Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]=1;
+		
+		Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]=0;
+		PickInit=c(PickInit,rev(which(Li==0)));
+		Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]=1;
+		
+		Li[REPO:(ncol(Li)-(1+REPO)),REPO]=0;
+		PickInit=c(PickInit,rev(which(Li==0)));		
+		Li[REPO:(ncol(Li)-(1+REPO)),REPO]=1;
+
+		Start=sample(seq(0,length(PickInit)-4),1);
+		PickInit=PickInit[seq(Start,Start+3)];
+
+		Li[PickInit]=0;
+		ToAdd=which(Li==0);
+		GRIDS=c(GRIDS,ToAdd);
+		while (sum(Li)>0){
+			MARKED=NULL;
+			for (x in seq(0,9)){
+				for (y in seq(0,9)){
+						if (Li[x,y]==0) {
+							
+							if ((x+1<10) & (y+1< 10)){
+								if (Li[x+1,y+1]!=0){
+								Li[x+1,y+1]=9;
+								MARKED=c(MARKED,which(Li==9));
+								Li[x+1,y+1]=1;
+							}
+							}
+							
+							if ((x+1<10)){
+								if (Li[x+1,y]!=0){
+								Li[x+1,y]=9;
+								MARKED=c(MARKED,which(Li==9));
+								Li[x+1,y]=1;
+							}
+							}
+							
+							if ((y+1< 10)){
+								if (Li[x,y+1]!=0){
+								Li[x,y+1]=9;
+								MARKED=c(MARKED,which(Li==9));
+								Li[x,y+1]=1;
+							}
+							}
+							
+							if ((x-1>=0) & (y-1>=0)){
+								if (Li[x-1,y-1]!=0){
+								Li[x-1,y-1]=9;
+								MARKED=c(MARKED,which(Li==9));
+								Li[x-1,y-1]=1;
+							}
+							}
+							
+							if ((x-1>=0)){
+								if (Li[x-1,y]!=0){
+								Li[x-1,y]=9;
+								MARKED=c(MARKED,which(Li==9));
+								Li[x-1,y]=1;
+							}
+							}							
+							
+							if (y-1>=0){
+								if (Li[x,y-1]!=0){
+								Li[x,y-1]=9;
+								MARKED=c(MARKED,which(Li==9));
+								Li[x,y-1]=1;
+							}		
+							}							
+							
+						}
+					
+					
+			
+				}
+			}
+			Li[MARKED]=0;
+			GRIDS=c(MARKED,GRIDS);
+		}
+		
+	GRIDS=unique(GRIDS);	
+	print(GRIDS);	
+	writeFile('PERIFERAL',paste(GRIDS,' '),append=F);
+
+
+}
+
+1 early() {
+sim.simulationFinished();	
+}
+
