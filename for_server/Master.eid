@@ -161,6 +161,8 @@ function (f$)sampleHeterozygosityWindow(  * sampledIndividuals , integer$ window
 
 initialize() {
 	
+	
+	
 	//set up filepaths	
 	defineConstant("mu", 1.67e-09);	
 	defineConstant("CAP", 1500);	
@@ -171,9 +173,10 @@ initialize() {
 	defineConstant("rho_file_in", "RecombFile.txt");
 	defineConstant("coord_file_in","GCF_000247815.1_FicAlb1.5_genomic.gff_for_SLiM.txt");
 
-
-
-
+	
+	if (exists("seed")==1){
+		setSeed(asInteger(seed)); ///// set //random seed
+		}
 
 	rho_file = readFile(rho_file_in);
 
@@ -191,8 +194,6 @@ initialize() {
 	
 
 
-	//random seed
-	setSeed(rdunif(1, 0, asInteger(2^32) - 1));	
 	defineConstant("start", clock());	////to track time	
 		
 		
@@ -264,9 +265,13 @@ initialize() {
 	////PARAMS
 
 	
-	paramtersfile = readFile('Parameters_File.txt');
-
+	if (exists("PAR")==0){
+	defineConstant("paramtersfile",readFile('Parameters_File.txt'));
+	}
 	
+	else{
+	defineConstant("paramtersfile",readFile(PAR));
+	}
 	
 	
 	defineConstant("ID", paste(strsplit(paramtersfile[0],'')[0:(length(strsplit(paramtersfile[0],''))-2)],''));
@@ -278,6 +283,7 @@ initialize() {
 	if (exists('sigma')==0){
 	defineConstant("sigma", 0.1);	
 	}
+
 
 	defineConstant("Start_DEC", asFloat(paramtersfile[2]));	
 	defineConstant("Start_INC", asFloat(paramtersfile[3]));	
@@ -325,9 +331,19 @@ initialize() {
 	/////////////// SELECT WHICH WAY THE COLLAPSE IS GONNA HAPPEN
 	
 	if (MODE=='P') {
+		if (exists('MFILE')==0){
+			defineConstant("RGSV", asInteger(strsplit(asString(paramtersfile[7]),' ')));	////RSV = Random Grid Shutdown Vector
+			defineConstant('KEYWORD','PAR_INPUT');
+		}
 		
-		defineConstant("RGSV", asInteger(strsplit(asString(paramtersfile[7]),' ')));	////RSV = Random Grid Shutdown Vector
-		defineConstant('KEYWORD','PAR_INPUT');
+		if (exists('MFILE')==1){
+			SEQ=asInteger(strsplit(asString(readFile(MFILE)),' '));
+			
+			defineConstant("RGSV", SEQ);	////RSV = Random Grid Shutdown Vector
+			defineConstant('KEYWORD',MFILE);
+		}
+		
+		
 	}
 	
 	
@@ -465,7 +481,7 @@ initialize() {
 	
 	
 	
-	defineConstant('OUT_NAME',paste(c('Hetero_',asString(ID),'_',KEYWORD,'_Sigma_',asString(sigma),'_LAYERS_',MAX_TICKS,'_PERCENTAGE_',PERCENTAGE),'')); ///Output name
+	defineConstant('OUT_NAME',paste(c('Hetero_',asString(ID),KEYWORD,'_Sigma_',asString(sigma),'_LAYERS_',MAX_TICKS,'_PERCENTAGE_',PERCENTAGE),'')); ///Output name
 
 	
     
@@ -542,7 +558,7 @@ reproduction() {
 	
 	if (   (length(LAYERS)<(MAX_TICKS+2))   |   (LAYERS[length(LAYERS)-1]>length(RGSV) ) | (LAYERS[MAX_TICKS+2]!=PERCENTAGE) ){   /////// FAIL SAFE - STOP RUN
 	print('ERROR: NOT MATCHING number of layers or Percentage is different from Last Layer');
-	print(c('The Layers:',LAYERS,' Number of layers (not including 0)',MAX_TICKS+2,' Percentage of ShutDown',PERCENTAGE,'Final Layer',LAYERS[MAX_TICKS+2]));
+	print(c('The Layers:',LAYERS,' Number of layers (not including 0)',MAX_TICKS+2,' Percentage of ShutDown',PERCENTAGE,'Final Layer',LAYERS[MAX_TICKS+2],'Length of Shutdown',length(RGSV)));
 	sim.simulationFinished();
 	
 	}
@@ -577,8 +593,11 @@ reproduction() {
 	
 	defineConstant("pdfPath", writeTempFile("plot_", ".pdf", "")); ////used to init plotting	
 	sim.setValue("pdfOpened", F);  ////////used to init plotting
-	deleteFile(OUT_NAME);	
 
+	//// prepare output files
+	writeFile(OUT_NAME+'_timeline.txt',paste(c('Mean_Pi','Std_Pi','Generation','Population_Size','Mean_Enviromental_Capacity'),'\t'),append=F);	
+	writeFile(OUT_NAME+'.all_pos',paste(c('Generation','Individual_ID','X_pos','Y_pos','Enviroment_capacity'),'\t'),append=F); 
+	writeFile(OUT_NAME+'.sampled_pos',paste(c('Generation','Individual_ID','X_pos','Y_pos','Enviroment_capacity'),'\t'),append=F); 
 	
     i1.evaluate();
 }
@@ -746,40 +765,39 @@ early() {
 		RES=mean(p1.spatialMapValue("map1", p1.individuals[NEWBORN].spatialPosition));
 		
 		
-		writeFile(OUT_NAME,paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount),asString(RES)),'\t'),append=T); /////write it out in our file
+		writeFile(OUT_NAME+'_timeline.txt',paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount),asString(RES)),'\t'),append=T); /////write it out in our file
 		
 		
-		deleteFile(paste(c(OUT_NAME,asString(GEN),'.vcf'),'_')); ///// Delete previous vcf,gz,tbi file with same name if exist then output vcf,zip it and tabulate it
-		deleteFile(paste(c(OUT_NAME,asString(GEN),'.vcf.gz'),'_'));
-		deleteFile(paste(c(OUT_NAME,asString(GEN),'.vcf.tbi'),'_'));
-		INDS.genomes.outputVCF(filePath = paste(c(OUT_NAME,asString(GEN),'.vcf'),'_'),simplifyNucleotides = F);
-		system(paste(c("bgzip",paste(c(OUT_NAME,asString(GEN),'.vcf'),'_'))," "));	
-		system(paste(c("tabix -p vcf",paste(c(OUT_NAME,asString(GEN),'.vcf.gz'),'_'))," "));	
+		deleteFile(paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.vcf'); ///// Delete previous vcf,gz,tbi file with same name if exist then output vcf,zip it and tabulate it
+		deleteFile(paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.vcf.gz');
+		deleteFile(paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.vcf.tbi');
+		INDS.genomes.outputVCF(filePath = paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.vcf',simplifyNucleotides = F);
+		system(paste(c("bgzip",paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.vcf')," "));	
+		system(paste(c("tabix -p vcf",paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.vcf.gz')," "));	
 		
 		
 		///////////////////////////////////////////////////// for all individuals in pop
 		
-		deleteFile(paste(c(OUT_NAME,asString(GEN),'.all_pos'),'_')); ///// do the same with positions
+		///// do the same with positions
 		ALLPOS=NULL;
 		
 		for (INDHERE in p1.individuals){ /// costly in time
-		ALLPOS=c(ALLPOS,paste(c(asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'));	
+		ALLPOS=c(ALLPOS,paste(c(asString(GEN),asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'));	
 			 // writeFile(paste(c(OUT_NAME,asString(GEN),'.all_pos'),'_'),paste(c(asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'),append=T);  ////  x and y positions
 		}
-		writeFile(paste(c(OUT_NAME,asString(GEN),'.all_pos'),'_'),paste(ALLPOS,'\n'));
+		writeFile(OUT_NAME+'.all_pos',paste(ALLPOS,'\n'),append=T);
 		
 		
 		//////////////////////////////////////////////////// for individuals sampled for vcf file
 		
 		
-		deleteFile(paste(c(OUT_NAME,asString(GEN),'.sampled_pos'),'_'));
 		SAMPLEPOS=NULL;
 		
 		for (INDHERE in INDS){ ///// not so much
-		SAMPLEPOS=c(SAMPLEPOS,paste(c(asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'));	
+		SAMPLEPOS=c(SAMPLEPOS,paste(c(asString(GEN),asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'));	
 			 // writeFile(paste(c(OUT_NAME,asString(GEN),'.sampled_pos'),'_'),paste(c(asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'),append=T);  ////  x and y positions
 		}
-		writeFile(paste(c(OUT_NAME,asString(GEN),'.sampled_pos'),'_'),paste(SAMPLEPOS,'\n'));
+		writeFile(OUT_NAME+'.sampled_pos',paste(SAMPLEPOS,'\n'),append=T);
 
 		
 	}////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -793,13 +811,14 @@ print(clock());
 print(date());
 print(sigma);
 print(p1.getValue("SHUT_GRIDS"));
+print(RGSV);
 }
 
 
 
 
-500 late() { /////end time
+150000 late() { /////end time
 // print(system(paste(c("bgzip",)," ")));
 ///// zip position and vcf files!
-writeFile(OUT_NAME,paste(c(asString(p1.getValue("SHUT_GRIDS"))),'\t'),append=T);
+// writeFile(OUT_NAME,paste(c(asString(RGSV),'\t'),append=T);
 }
