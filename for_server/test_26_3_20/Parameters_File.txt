@@ -1,4 +1,4 @@
-Smoother_Collapse_
+Smoother_Collapse
 2
 120000
 130000

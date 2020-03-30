@@ -480,8 +480,8 @@ initialize() {
 	///////////////////////////////////////////////////////////////////////////////////////////////	
 	
 	
-	
-	defineConstant('OUT_NAME',paste(c('Hetero_',asString(ID),KEYWORD,'_Sigma_',asString(sigma),'_LAYERS_',MAX_TICKS,'_PERCENTAGE_',PERCENTAGE),'')); ///Output name
+
+	defineConstant('OUT_NAME',paste(c(asString(getSeed()),asString(ID),KEYWORD,'Sigma',asString(sigma),'LAYERS',MAX_TICKS,'PERCENTAGE',PERCENTAGE),'_')); ///Output name
 
 	
     
@@ -714,36 +714,36 @@ early() {
 		
 		
 		
-		if (size(p1.individuals)>=100)  ///// try to sample 25 individuals from each of the 4 quadrants
+		if (size(p1.individuals)>=100)  
 			{
-			INDS=NULL;	
+			// INDS=NULL;	///// try to sample 25 individuals from each of the 4 quadrants
 			
-			TOP_RIGTH=p1.individuals[which(p1.individuals.x>=5.0 & p1.individuals.y>=5.0)];	
-			if (length(TOP_RIGTH)>0){
-			sampl=sample(TOP_RIGTH,min(25,length(TOP_RIGTH)));
-			INDS=c(INDS,sampl);
-			}	
+			// TOP_RIGTH=p1.individuals[which(p1.individuals.x>=5.0 & p1.individuals.y>=5.0)];	
+			// if (length(TOP_RIGTH)>0){
+			// sampl=sample(TOP_RIGTH,min(25,length(TOP_RIGTH)));
+			// INDS=c(INDS,sampl);
+			// }	
 			
-			TOP_LEFT=p1.individuals[which(p1.individuals.x<5.0 & p1.individuals.y>=5.0)];	
-			if (length(TOP_LEFT)>0){
-			sampl=sample(TOP_LEFT,min(25,length(TOP_LEFT)));
-			INDS=c(INDS,sampl);
-			}
+			// TOP_LEFT=p1.individuals[which(p1.individuals.x<5.0 & p1.individuals.y>=5.0)];	
+			// if (length(TOP_LEFT)>0){
+			// sampl=sample(TOP_LEFT,min(25,length(TOP_LEFT)));
+			// INDS=c(INDS,sampl);
+			// }
 			
-			BOT_RIGTH=p1.individuals[which(p1.individuals.x>=5.0 & p1.individuals.y<5.0)];	
-			if (length(BOT_RIGTH)>0){
-			sampl=sample(BOT_RIGTH,min(25,length(BOT_RIGTH)));
-			INDS=c(INDS,sampl);
-			}			
+			// BOT_RIGTH=p1.individuals[which(p1.individuals.x>=5.0 & p1.individuals.y<5.0)];	
+			// if (length(BOT_RIGTH)>0){
+			// sampl=sample(BOT_RIGTH,min(25,length(BOT_RIGTH)));
+			// INDS=c(INDS,sampl);
+			// }			
 			
-			BOT_LEFT=p1.individuals[which(p1.individuals.x<5.0 & p1.individuals.y<5.0)];	
-			if (length(BOT_LEFT)>0){
-			sampl=sample(BOT_LEFT,min(25,length(BOT_LEFT)));
-			INDS=c(INDS,sampl);
-			}				
+			// BOT_LEFT=p1.individuals[which(p1.individuals.x<5.0 & p1.individuals.y<5.0)];	
+			// if (length(BOT_LEFT)>0){
+			// sampl=sample(BOT_LEFT,min(25,length(BOT_LEFT)));
+			// INDS=c(INDS,sampl);
+			// }				
 				
 				
-			// INDS=sample(p1.individuals,100,F); //// sample 100 individuals 
+			INDS=sample(p1.individuals,100,F); //// sample 100 individuals 
 			}
 
 			

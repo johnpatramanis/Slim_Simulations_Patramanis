@@ -5,12 +5,16 @@ initializeGenomicElementType("g1", m1, 0.5);
 initializeGenomicElement(g1, 0, 100);
 initializeRecombinationRate(1.67e-07);
 
-
-
+if (exists("seed")==1){
+		setSeed(asInteger(seed)); ///// set //random seed
+		}
+if (exists("seed")==0){
+		print('Please provide a seed using -d seed= <SEED ID>'); ///// set //random seed
+		}
 //////// Generate Random Sequence		
 		RandomSample=sample(seq(0,99),99,replace=F);	
 		print(RandomSample);
-		writeFile('RANDOM',paste(RandomSample,' '),append=F);
+		writeFile('RANDOM_'+asString(getSeed()),paste(RandomSample,' '),append=F);
 	
 //////// Generate Circular Sequence
 		GRIDS=NULL;		
@@ -29,7 +33,7 @@ initializeRecombinationRate(1.67e-07);
     	}
 		
 		print(GRIDS);
-		writeFile('CIRCULAR',paste(GRIDS,' '),append=F);
+		writeFile('CIRCULAR_'+asString(getSeed()),paste(GRIDS,' '),append=F);
 
 
 	
@@ -127,7 +131,7 @@ initializeRecombinationRate(1.67e-07);
 		
 	GRIDS=unique(GRIDS);	
 	print(GRIDS);	
-	writeFile('PERIFERAL',paste(GRIDS,' '),append=F);
+	writeFile('PERIFERAL_'+asString(getSeed()),paste(GRIDS,' '),append=F);
 
 
 }
