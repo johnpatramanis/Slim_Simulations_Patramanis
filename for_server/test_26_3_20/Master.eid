@@ -299,8 +299,10 @@ initialize() {
 	defineConstant("decrease_amount", asFloat(paramtersfile[6]));	
 
 
-
+	if (exists('K')==0){
     defineConstant("K", 30);  // carrying-capacity per unit square (roughly)
+	}
+	
     defineConstant("SD", sigma);  // sigma_D, the dispersal distance
     defineConstant("SI", sigma);  // sigma_I, the spatial interaction distance
     defineConstant("SM", SI);  // sigma_M, the mate choice distance
@@ -516,7 +518,10 @@ reproduction() {
 		CircleOfPositions=c(c(SD,0),c(SD,SD),c(0,SD),c(-SD,SD),c(-SD,0),c(-SD,-SD),c(0,-SD),c(SD,-SD));  //// 8 points around individual at SD distance
 		AngleOfPositions=c(0,45,90,135,180,225,270,315);
 
-		
+		if(nOff>0){
+		p1.setValue("REPRODUCERS",c(p1.getValue("REPRODUCERS"),mate.index,individual.index));
+		p1.setValue("PAIRS",p1.getValue("PAIRS")+1);
+		}
         for (i in seqLen(nOff)) {			
 			
 			Choices=c();
@@ -598,10 +603,12 @@ reproduction() {
 	sim.setValue("pdfOpened", F);  ////////used to init plotting
 
 	//// prepare output files
-	writeFile(OUT_NAME+'_timeline.txt',paste(c('Mean_Pi','Std_Pi','Generation','Population_Size','Mean_Enviromental_Capacity'),'\t'),append=F);	
+	writeFile(OUT_NAME+'_timeline.txt',paste(c('Mean_Pi','Std_Pi','Generation','Population_Size','Mean_Enviromental_Capacity','Avg_Reprod','Births','Pairs','Deaths'),'\t'),append=F);	
 	writeFile(OUT_NAME+'.all_pos',paste(c('Generation','Individual_ID','X_pos','Y_pos','Enviroment_capacity'),'\t'),append=F); 
 	writeFile(OUT_NAME+'.sampled_pos',paste(c('Generation','Individual_ID','X_pos','Y_pos','Enviroment_capacity'),'\t'),append=F); 
 	
+	p1.setValue("REPRODUCERS",NULL);
+	p1.setValue("PAIRS",0);
     i1.evaluate();
 }
 
@@ -627,6 +634,9 @@ early() {
    i2.evaluate(p1);
 }
 
+2: early(){
+p1.setValue('EarlyInds',p1.individualCount);
+}
 2: late() {
 	GEN=sim.generation;
 	
@@ -740,8 +750,14 @@ early() {
 		NEWBORN=which(p1.individuals.age==0);
 		RES=mean(p1.spatialMapValue("map1", p1.individuals[NEWBORN].spatialPosition));
 		
+		UNICOUNTER=NULL;
+		REPRODS=p1.getValue("REPRODUCERS");
+		for (UNIQ in unique(REPRODS)){
+			UNICOUNTER=c(UNICOUNTER,length(which(REPRODS==UNIQ)));
+		}
+		UNICOUNTER=mean(UNICOUNTER);
 		
-		writeFile(OUT_NAME+'_timeline.txt',paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount),asString(RES)),'\t'),append=T); /////write it out in our file
+		writeFile(OUT_NAME+'_timeline.txt',paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount),asString(RES),UNICOUNTER,length(NEWBORN),p1.getValue("PAIRS"),(p1.getValue('EarlyInds')-p1.individualCount)),'\t'),append=T); /////write it out in our file
 		
 		
 		deleteFile(paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.vcf'); ///// Delete previous vcf,gz,tbi file with same name if exist then output vcf,zip it and tabulate it
@@ -780,6 +796,8 @@ early() {
 
 
 
+p1.setValue("REPRODUCERS",NULL);
+p1.setValue("PAIRS",0);
 
 print(paste(c('Population Size: ',p1.individualCount),'\t'));
 print(paste(c('Generation: ',sim.generation),'\t'));
