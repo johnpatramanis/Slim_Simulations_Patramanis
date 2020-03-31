@@ -238,6 +238,7 @@ initialize() {
 	/////Construct Recombination Landscape from file
 	rates = NULL;
 	ends = NULL;
+	
 	defineConstant("Length",Lengths);
 	initializeAncestralNucleotides(randomNucleotides(Length+1)); /////Reference Nucl seq
 
@@ -298,13 +299,16 @@ initialize() {
 	defineConstant("decrease_amount", asFloat(paramtersfile[6]));	
 
 
-
-    defineConstant("K", 110);  // carrying-capacity per unit square (roughly)
+	if (exists('K')==0){
+    defineConstant("K", 30);  // carrying-capacity per unit square (roughly)
+	}
+	
     defineConstant("SD", sigma);  // sigma_D, the dispersal distance
     defineConstant("SI", sigma);  // sigma_I, the spatial interaction distance
     defineConstant("SM", SI);  // sigma_M, the mate choice distance
     defineConstant("L", 4);    // mean lifetime at stationarity
     defineConstant("W", 10.0);  // width and height of the simulated area
+    defineConstant("G", 1e8);  // genome length
     defineConstant("FECUN", 1/L); // mean fecundity
     defineConstant("RHO", FECUN/((1+FECUN) * K)); // constant in spatial competition function
 
@@ -514,7 +518,10 @@ reproduction() {
 		CircleOfPositions=c(c(SD,0),c(SD,SD),c(0,SD),c(-SD,SD),c(-SD,0),c(-SD,-SD),c(0,-SD),c(SD,-SD));  //// 8 points around individual at SD distance
 		AngleOfPositions=c(0,45,90,135,180,225,270,315);
 
-		
+		if(nOff>0){
+		p1.setValue("REPRODUCERS",c(p1.getValue("REPRODUCERS"),mate.index,individual.index));
+		p1.setValue("PAIRS",p1.getValue("PAIRS")+1);
+		}
         for (i in seqLen(nOff)) {			
 			
 			Choices=c();
@@ -543,7 +550,6 @@ reproduction() {
             if (p1.pointInBounds(pos)) {
             	offspring = subpop.addCrossed(individual, mate);
           		offspring.setSpatialPosition(pos);
-				p1.setValue("BIRTH_COUTNER",p1.getValue("BIRTH_COUTNER")+1);
           	}
 			
 			
@@ -565,7 +571,7 @@ reproduction() {
 	
 	}
 
-	
+
 	
 	
 	
@@ -597,9 +603,12 @@ reproduction() {
 	sim.setValue("pdfOpened", F);  ////////used to init plotting
 
 	//// prepare output files
-	writeFile(OUT_NAME+'_timeline.txt',paste(c('Mean_Pi','Std_Pi','Generation','Population_Size','Mean_Enviromental_Capacity'),'\t'),append=F);	
+	writeFile(OUT_NAME+'_timeline.txt',paste(c('Mean_Pi','Std_Pi','Generation','Population_Size','Mean_Enviromental_Capacity','Avg_Reprod','Births','Pairs','Deaths'),'\t'),append=F);	
+	writeFile(OUT_NAME+'.all_pos',paste(c('Generation','Individual_ID','X_pos','Y_pos','Enviroment_capacity'),'\t'),append=F); 
+	writeFile(OUT_NAME+'.sampled_pos',paste(c('Generation','Individual_ID','X_pos','Y_pos','Enviroment_capacity'),'\t'),append=F); 
 	
-	p1.setValue("BIRTH_COUTNER",0);
+	p1.setValue("REPRODUCERS",NULL);
+	p1.setValue("PAIRS",0);
     i1.evaluate();
 }
 
@@ -625,91 +634,15 @@ early() {
    i2.evaluate(p1);
 }
 
+2: early(){
+p1.setValue('EarlyInds',p1.individualCount);
+}
 2: late() {
 	GEN=sim.generation;
 	
-	
-	
-	
-	if ( (GEN%Big_Timer==0) & (p1.getValue("REP")<=(MAX_TICKS+1)) & ( GEN < Start_INC ) & ( GEN>= (Start_DEC+Big_Timer) ) )
-	{////////////// Moving into inner row of matrix //////////////////////////////////////////////////////////////////////////////////////////////////////
-	
-		REPO=p1.getValue("REP");
-		p1.setValue("REP", (REPO+1));
-	
-	}///////////////////////////////////
-	
-	
-	if( (GEN%Small_Timer==0) & sum(p1.getValue("L")) > 20 & ( GEN < Start_INC ) & ( GEN>= Start_DEC ) )
-	{//////////////// Changing values of row(layer) /////////////////////////////////
-		
-		REPZ=p1.getValue("REP");
-        p1.setValue("SHUT_GRIDS",RGSV[0:LAYERS[REPZ]]);
-		SHUT_GRIDS=p1.getValue("SHUT_GRIDS");
-
-		
-		Li = p1.getValue("L");
-		
-		Li[SHUT_GRIDS]=Li[SHUT_GRIDS] - decrease_amount;
-		Zeroz=which(Li<0.1);
-		Li[Zeroz]=0;
-		Li=matrix(Li,10,10);
-		
-
-    	p1.defineSpatialMap("map1", "xy", c(10, 10), Li, interpolate=T,valueRange=c(0.0, 1.0), colors=c("black", "white"));
-    	p1.setValue("L", Li);
-    	print(matrix(Li,10,10));
-    	
-    }////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-
-
-	if (GEN==120000)		
-	{	
-	sim.outputFull(filePath='BurnInFileOut');	
-		
-	}
-
-   
-   
-   
-   	if ( ( GEN%Big_Timer==0 ) & ( p1.getValue("REP")>0 ) &  ( GEN>=(Start_INC) ) )
-    {////////////// Map Values changing (plus) ////////////////////////////////////////////////////////////////////////////////////////////////
-    
-    	REPO=p1.getValue("REP");
-    	p1.setValue("REP", (REPO-1));
-    
-    
-    }//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-   
-   
  
-
-   
-    if ( ( GEN%Small_Timer==0 ) & (sum(p1.getValue("L")) < 100) &  ( GEN>=Start_INC ) )
-    {
-		
-		REPZ=p1.getValue("REP");
-        p1.setValue("SHUT_GRIDS",RGSV[LAYERS[REPZ]:99]);
-		SHUT_GRIDS=p1.getValue("SHUT_GRIDS");
-    	Li = p1.getValue("L");
-		
-		Li[SHUT_GRIDS]=Li[SHUT_GRIDS] + decrease_amount;
-		Onez=which(Li>0.9);
-		Li[Onez]=1;
-		Li=matrix(Li,10,10);
-		
-		
-    
-    	p1.defineSpatialMap("map1", "xy", c(10, 10), Li, interpolate=T,valueRange=c(0.0, 1.0), colors=c("black", "white"));
-    	p1.setValue("L", Li);
-    	print(matrix(Li,10,10));
-    	
-    }
-
-
-
 	if ( (GEN>=0 & GEN%250==0) | ( (GEN>=Start_DEC) & (GEN%2==0) & (GEN<=(Start_INC+200)) ) )///when to make matrics//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	{
 		
@@ -738,15 +671,23 @@ early() {
 		NEWBORN=which(p1.individuals.age==0);
 		RES=mean(p1.spatialMapValue("map1", p1.individuals[NEWBORN].spatialPosition));
 		
+		UNICOUNTER=NULL;
+		REPRODS=p1.getValue("REPRODUCERS");
+		for (UNIQ in unique(REPRODS)){
+			UNICOUNTER=c(UNICOUNTER,length(which(REPRODS==UNIQ)));
+		}
+		UNICOUNTER=mean(UNICOUNTER);
 		
-		writeFile(OUT_NAME+'_timeline.txt',paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount),asString(RES),p1.getValue("BIRTH_COUTNER")),'\t'),append=T); /////write it out in our file
+		writeFile(OUT_NAME+'_timeline.txt',paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount),asString(RES),UNICOUNTER,length(NEWBORN),p1.getValue("PAIRS"),(p1.getValue('EarlyInds')-p1.individualCount)),'\t'),append=T); /////write it out in our file
 		
-			
+		
 	}////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
-p1.setValue("BIRTH_COUTNER",0);
+p1.setValue("REPRODUCERS",NULL);
+p1.setValue("PAIRS",0);
+
 print(paste(c('Population Size: ',p1.individualCount),'\t'));
 print(paste(c('Generation: ',sim.generation),'\t'));
 print(clock());
