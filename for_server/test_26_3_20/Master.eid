@@ -481,7 +481,7 @@ initialize() {
 	
 	
 
-	defineConstant('OUT_NAME',paste(c(asString(getSeed()),asString(ID),KEYWORD,'Sigma',asString(sigma),'LAYERS',MAX_TICKS,'PERCENTAGE',PERCENTAGE),'_')); ///Output name
+	defineConstant('OUT_NAME',paste(c('OUT_SED',asString(getSeed()),asString(ID),KEYWORD,'Sigma',asString(sigma),'LAYERS',MAX_TICKS,'PERCENTAGE',PERCENTAGE),'_')); ///Output name
 
 	
     
