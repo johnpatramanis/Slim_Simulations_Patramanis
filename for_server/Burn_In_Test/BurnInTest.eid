@@ -683,31 +683,31 @@ print(RGSV);
 
 
 100 late() { /////end time
-sim.outputFull(paste(c(OUT_NAME,asString(sim.generation),'.FULL'),'_'));
+sim.outputFull(paste(c(OUT_NAME,'GEN',asString(sim.generation),'.FULL'),'_'));
 }
 
 
 50000 late() { /////end time
-sim.outputFull(paste(c(OUT_NAME,asString(sim.generation),'.FULL'),'_'));
+sim.outputFull(paste(c(OUT_NAME,'GEN',asString(sim.generation),'.FULL'),'_'));
 }
 
 80000 late() { /////end time
-sim.outputFull(paste(c(OUT_NAME,asString(sim.generation),'.FULL'),'_'));
+sim.outputFull(paste(c(OUT_NAME,'GEN',asString(sim.generation),'.FULL'),'_'));
 }
 
 100000 late() { /////end time
-sim.outputFull(paste(c(OUT_NAME,asString(sim.generation),'.FULL'),'_'));
+sim.outputFull(paste(c(OUT_NAME,'GEN',asString(sim.generation),'.FULL'),'_'));
 }
 
 120000 late() { /////end time
-sim.outputFull(paste(c(OUT_NAME,asString(sim.generation),'.FULL'),'_'));
+sim.outputFull(paste(c(OUT_NAME,'GEN',asString(sim.generation),'.FULL'),'_'));
 }
 
 150000 late() { /////end time
-sim.outputFull(paste(c(OUT_NAME,asString(sim.generation),'.FULL'),'_'));
+sim.outputFull(paste(c(OUT_NAME,'GEN',asString(sim.generation),'.FULL'),'_'));
 }
 
 200000 late() { /////end time
-sim.outputFull(paste(c(OUT_NAME,asString(sim.generation),'.FULL'),'_'));
+sim.outputFull(paste(c(OUT_NAME,'GEN',asString(sim.generation),'.FULL'),'_'));
 }
 
