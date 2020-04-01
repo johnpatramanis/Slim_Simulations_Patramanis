@@ -164,8 +164,7 @@ initialize() {
 	
 	
 	//set up filepaths	
-	defineConstant("mu", 7e-10);	
-	defineConstant("CAP", 1500);	
+	defineConstant("mu", 10e-08);	
 
 	defineConstant("outPref", "out_test_WF_2D");	
 	defineConstant("psmc_file", "Nipponia_softCollapse_gen3_varSCALE2.txt");
@@ -251,7 +250,7 @@ initialize() {
 	defineConstant("recomb_ends", ends); //define ends vector
 	defineConstant("recomb_rates", rates); //define rate vector
 	// initializeRecombinationRate(rates, ends); //recombination only needs those two things ends+rates
-	initializeRecombinationRate(1.5e-08);  ///// FLAT Reacombination Rate
+	initializeRecombinationRate(10e-09);  ///// FLAT Reacombination Rate
 
 	// psmc file
 	file = readFile(psmc_file);
