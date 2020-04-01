@@ -602,7 +602,7 @@ reproduction() {
 	sim.setValue("pdfOpened", F);  ////////used to init plotting
 
 	//// prepare output files
-	writeFile(OUT_NAME+'_timeline.txt',paste(c('Mean_Pi','Std_Pi','Generation','Population_Size','Mean_Enviromental_Capacity','Avg_Reprod','Births','Pairs','Deaths'),'\t'),append=F);	
+	writeFile(OUT_NAME+'_timeline.txt',paste(c('Mean_Pi','Std_Pi','Generation','Population_Size','Mean_Envir_Experience','Avg_Reprod','Births','Pairs','Deaths','Total_Env_Cap'),'\t'),append=F);	
 	writeFile(OUT_NAME+'.all_pos',paste(c('Generation','Individual_ID','X_pos','Y_pos','Enviroment_capacity'),'\t'),append=F); 
 	writeFile(OUT_NAME+'.sampled_pos',paste(c('Generation','Individual_ID','X_pos','Y_pos','Enviroment_capacity'),'\t'),append=F); 
 	
@@ -756,7 +756,7 @@ p1.setValue('EarlyInds',p1.individualCount);
 		}
 		UNICOUNTER=mean(UNICOUNTER);
 		
-		writeFile(OUT_NAME+'_timeline.txt',paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount),asString(RES),UNICOUNTER,length(NEWBORN),p1.getValue("PAIRS"),(p1.getValue('EarlyInds')-p1.individualCount)),'\t'),append=T); /////write it out in our file
+		writeFile(OUT_NAME+'_timeline.txt',paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount),asString(RES),UNICOUNTER,length(NEWBORN),p1.getValue("PAIRS"),(p1.getValue('EarlyInds')-p1.individualCount),sum(p1.getValue("L"))),'\t'),append=T); /////write it out in our file
 		
 		
 		deleteFile(paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.vcf'); ///// Delete previous vcf,gz,tbi file with same name if exist then output vcf,zip it and tabulate it
