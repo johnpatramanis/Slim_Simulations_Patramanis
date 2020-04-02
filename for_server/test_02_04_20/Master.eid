@@ -632,7 +632,10 @@ p1.setValue('EarlyInds',p1.individualCount);
 2: late() {
 	GEN=sim.generation;
 	
-	
+	if (p1.individualCount<=1){
+	print('Population Total Collapse');
+	sim.simulationFinished();
+	}
 	
 	
 	if ( (GEN%Big_Timer==0) & (p1.getValue("REP")<=(MAX_TICKS+1)) & ( GEN < Start_INC ) & ( GEN>= (Start_DEC+Big_Timer) ) )
