@@ -747,10 +747,15 @@ p1.setValue('EarlyInds',p1.individualCount);
 		
 		UNICOUNTER=NULL;
 		REPRODS=p1.getValue("REPRODUCERS");
+		
+		if (isNULL(REPRODS)==0){
 		for (UNIQ in unique(REPRODS)){
 			UNICOUNTER=c(UNICOUNTER,length(which(REPRODS==UNIQ)));
 		}
 		UNICOUNTER=mean(UNICOUNTER);
+		}
+		if (isNULL(REPRODS)==1){UNICOUNTER=0;}
+		
 		
 		writeFile(OUT_NAME+'_timeline.txt',paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount),asString(RES),UNICOUNTER,length(NEWBORN),p1.getValue("PAIRS"),(p1.getValue('EarlyInds')-p1.individualCount),sum(p1.getValue("L"))),'\t'),append=T); /////write it out in our file
 		
