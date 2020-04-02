@@ -315,6 +315,9 @@ initialize() {
 
 	defineConstant("PERCENTAGE", LAYERS[MAX_TICKS+2]);	//// last 
 	
+	if (exists('LIMIT')==0){
+		defineConstant('LIMIT',20);
+	}
 	
 	
 	
@@ -641,7 +644,7 @@ p1.setValue('EarlyInds',p1.individualCount);
 	}///////////////////////////////////
 	
 	
-	if( (GEN%Small_Timer==0) & sum(p1.getValue("L")) > 20 & ( GEN < Start_INC ) & ( GEN>= Start_DEC ) )
+	if( (GEN%Small_Timer==0) & ( sum(p1.getValue("L")) > LIMIT ) & ( GEN < Start_INC ) & ( GEN>= Start_DEC ) )
 	{//////////////// Changing values of row(layer) /////////////////////////////////
 		
 		REPZ=p1.getValue("REP");
