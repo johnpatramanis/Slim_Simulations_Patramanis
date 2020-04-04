@@ -1,0 +1,789 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////// CUSTOM FUNCTIONZZZ  /////////////////////
+
+function (f$)calcFST(o<Subpopulation>$ subpop1, o<Subpopulation>$ subpop2) //// Function to calculate FST given two populations
+{
+	p1_p = sim.mutationFrequencies(subpop1);
+	p2_p = sim.mutationFrequencies(subpop2);
+	mean_p = (p1_p + p2_p) / 2.0;
+	H_t = 2.0 * mean_p * (1.0 - mean_p);
+	H_s = p1_p * (1.0 - p1_p) + p2_p * (1.0 - p2_p);
+	fst = 1.0 - H_s/H_t;
+	fst = fst[!isNAN(fst)];  // exclude muts where mean_p is 0.0 or 1.0
+	return mean(fst);
+}
+
+
+function (f$)genomicHeterozygosity(o<Genome>$ genome1, o<Genome>$ genome2) //// Calculates Genomic Diversity between two genomes
+{
+	muts1 = genome1.mutations;
+	muts2 = genome2.mutations;
+	unshared = setSymmetricDifference(muts1, muts2);
+	pi = size(unshared) / Length;
+	return pi;
+}
+
+/*
+
+  Estimate the average nucleotide heterozygosity in a subpopulation by sampling individuals at random and averaging the heterozygosity of all of the individuals sampled.  Note that this function normally uses a sample of individuals, of a size supplied in the optional parameter sampleSize; but if sampleSize is equal to the number of individuals in subpop, it will instead compute the heterozygosity exactly, as the mean of the heterozygosities of all individuals, rather than taking a sample.  For large subpopulations, that will of course be much slower than using a sample, however.
+
+*/
+
+
+
+function (f$)subpopHeterozygosity(o<Subpopulation>$ subpop, [i$ sampleSize=100]) //// Calcualte Genet Heterozygosity from a sample of Individuals of a pop
+{
+	if (sampleSize == subpop.individualCount)
+		sampledIndividuals = subpop.individuals;
+	else
+		sampledIndividuals = sample(subpop.individuals, sampleSize, replace=F);
+	
+	pi_total = 0;
+	for (individual in sampledIndividuals)
+	{
+		genomes = individual.genomes;
+		individual_pi = genomicHeterozygosity(genomes[0], genomes[1]);
+		pi_total = pi_total + individual_pi;
+	}
+	return pi_total / sampleSize;
+}
+
+
+function (f$)subpopHeterozygositystd(o<Subpopulation>$ subpop, [i$ sampleSize=100]) //// Calcualte Genet Heterozygosity from a sample of Individuals of a pop
+{
+	if (sampleSize == subpop.individualCount)
+		sampledIndividuals = subpop.individuals;
+	else
+		sampledIndividuals = sample(subpop.individuals, sampleSize, replace=F);
+	
+	pi_total = c();
+	for (individual in sampledIndividuals)
+	{
+		genomes = individual.genomes;
+		individual_pi = genomicHeterozygosity(genomes[0], genomes[1]);
+		pi_total = c(pi_total,individual_pi);
+	}
+	return sd(pi_total);
+}
+
+function (f$)subpopHeterozygositymean(o<Subpopulation>$ subpop, [i$ sampleSize=100]) //// Calcualte Genet Heterozygosity from a sample of Individuals of a pop
+{
+	if (sampleSize == subpop.individualCount)
+		sampledIndividuals = subpop.individuals;
+	else
+		sampledIndividuals = sample(subpop.individuals, sampleSize, replace=F);
+	
+	pi_total = c();
+	for (individual in sampledIndividuals)
+	{
+		genomes = individual.genomes;
+		individual_pi = genomicHeterozygosity(genomes[0], genomes[1]);
+		pi_total = c(pi_total,individual_pi);
+	}
+	return mean(pi_total);
+}
+
+////////////////////////////////////////////////////////////////// NEW Modified Functions for Windows   /////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+function (f$)genomicHeterozygosityWindow(o<Genome>$ genome1, o<Genome>$ genome2 ,integer$ window1 , integer$ window2 ) ///Calc heterozig between 2 genomes only for a certain window
+{
+	muts1 = genome1.mutations;
+	muts1 = muts1[muts1.position>=window1 & muts1.position<=window2];
+	
+	muts2 = genome2.mutations;
+	muts2 = muts2[muts2.position>=window1 & muts2.position<=window2];	
+	
+	unshared = setSymmetricDifference(muts1, muts2);
+	pi = size(unshared) / (window2-window1);
+	return pi;
+}
+
+
+function (f$)subpopHeterozygosityWindow( o<Subpopulation>$ subpop, integer$ window1, integer$ window2, [i$ sampleSize=100] ) ///Calc heteroz for a sample of inds from a pop BUT for a specific window
+{
+	if (sampleSize == subpop.individualCount)
+		sampledIndividuals = subpop.individuals;
+	else
+		sampledIndividuals = sample(subpop.individuals, sampleSize, replace=T);
+	
+	pi_total = 0;
+	for (individual in sampledIndividuals)
+	{
+		genomes = individual.genomes;
+		individual_pi = genomicHeterozygosityWindow(genomes[0], genomes[1], window1 , window2);
+		pi_total = pi_total + individual_pi;
+	}
+	return pi_total / sampleSize;
+}
+
+
+
+function (f$)sampleHeterozygosityWindow(  * sampledIndividuals , integer$ window1, integer$ window2) ///Calc heterozigo for a SPECIFIC group/sample of inds and specific window
+{
+	pi_total = 0;
+	for (individual in sampledIndividuals)
+	{
+		genomes = individual.genomes;
+		individual_pi = genomicHeterozygosityWindow(genomes[0], genomes[1], window1 , window2);
+		pi_total = pi_total + individual_pi;
+	}
+	return pi_total / size(sampledIndividuals);
+}
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+initialize() {
+	
+	
+	
+	//set up filepaths	
+	defineConstant("mu", 10e-08);	
+
+	defineConstant("outPref", "out_test_WF_2D");	
+	defineConstant("psmc_file", "Nipponia_softCollapse_gen3_varSCALE2.txt");
+	defineConstant("ranges_file", "Nipponia_softCollapse_gen3_varSCALE2_ranges.txt");
+	defineConstant("rho_file_in", "RecombFile.txt");
+	defineConstant("coord_file_in","coords_SLiM_GCF_000247815.1_FicAlb1.5_chr24.txt");
+
+	
+	if (exists("seed")==1){
+		setSeed(asInteger(seed)); ///// set //random seed
+		}
+
+	rho_file = readFile(rho_file_in);
+
+
+	// defineConstant("Length", asInteger(strsplit(rho_file[length(rho_file)-1],"\t")[2])); /// L= length of sequence
+	
+	coord_file = readFile(coord_file_in);
+	
+	initializeSLiMModelType("nonWF");
+    initializeSLiMOptions(dimensionality="xy", nucleotideBased=T);
+
+    // initializeTreeSeq(checkCoalescence=T);
+
+
+	
+	
+
+
+	defineConstant("start", clock());	////to track time	
+		
+		
+	/////mutations	/////for now all are neutral
+	initializeMutationTypeNuc("m1", 0.0, "f", 0.0);         // non-coding	
+	initializeMutationTypeNuc("m2", 0.0, "f", 0.0);         // synonymous	
+	initializeMutationTypeNuc("m3", 0.0, "f", 0.0);         // deleterious	
+	initializeMutationTypeNuc("m4", 0.0, "f", 0.0);         // beneficial	
+
+		
+		
+		
+	/////Create Chromosome Building Blocks	//////Jukes Candor simplest mutation matrix, transition=transversion
+	initializeGenomicElementType("g1", c(m1,m2,m3,m4), c(0.25,0.25,0.25,0.25), mmJukesCantor(mu));   // exon	
+	initializeGenomicElementType("g2", c(m1,m2,m3), c(0.33,0.33,0.33), mmJukesCantor(mu));           // intron	
+	initializeGenomicElementType("g3", c(m1,m2), c(0.5,0.5), mmJukesCantor(mu));                     // non-coding	
+		
+
+	/////Construct Chromosome from Coordinate file
+	for (coord_line in coord_file){
+			ROW = strsplit(coord_line, "\t");
+			feature = ROW[2];
+
+			if(feature=="exon") {
+				initializeGenomicElement(g1, asInteger(ROW[3]), asInteger(ROW[4]));
+				Lengths=asInteger(ROW[4]);
+			}	
+			
+			if(feature=="intron") {	
+				initializeGenomicElement(g2, asInteger(ROW[3]), asInteger(ROW[4]));	
+				Lengths=asInteger(ROW[4]);
+			}	
+			
+			if(feature=="non_coding") {	
+				initializeGenomicElement(g3, asInteger(ROW[3]), asInteger(ROW[4]));	
+				Lengths=asInteger(ROW[4]);
+			}	
+			
+		}	
+
+	/////Construct Recombination Landscape from file
+	rates = NULL;
+	ends = NULL;
+	
+	defineConstant("Length",Lengths);
+	initializeAncestralNucleotides(randomNucleotides(Length+1)); /////Reference Nucl seq
+
+	for (rho_line in rho_file){////Recombination rates
+			components = strsplit(rho_line, "\t");
+			ends = c(ends, asInteger(components[2])); //append to ends file
+			rates = c(rates, asFloat(components[7])); //append to rates file
+		}
+
+	defineConstant("recomb_ends", ends); //define ends vector
+	defineConstant("recomb_rates", rates); //define rate vector
+	// initializeRecombinationRate(rates, ends); //recombination only needs those two things ends+rates
+	initializeRecombinationRate(10e-09);  ///// FLAT Reacombination Rate
+
+	// psmc file
+	file = readFile(psmc_file);
+	defineConstant("psmc", file); //for later use
+
+	// ranges file
+	file3 = readFile(ranges_file);
+	defineConstant("ranges", file3); //for later use
+
+	
+	////defineConstant("LifeTable",c(1.0,1.0,1.0,0.8,0.6,0.4,0.2,0.1,0.05,0.0));               //// Life table should we choose to use it
+
+
+
+	//// Model settings
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
+	///////////////////////////////////////////////////////////////// 
+	////PARAMS
+
+	
+	if (exists("PAR")==0){
+	defineConstant("paramtersfile",readFile('Parameters_File.txt'));
+	}
+	
+	else{
+	defineConstant("paramtersfile",readFile(PAR));
+	}
+	
+	
+	defineConstant("ID", paste(strsplit(paramtersfile[0],'')[0:(length(strsplit(paramtersfile[0],''))-2)],''));
+
+	defineConstant("MAX_TICKS", asFloat(paramtersfile[1])-3);
+
+
+	if (exists('sigma')==0){
+	defineConstant("sigma", 0.1);	
+	}
+
+
+	defineConstant("Start_DEC", asFloat(paramtersfile[2]));	
+	defineConstant("Start_INC", asFloat(paramtersfile[3]));	
+	defineConstant("Big_Timer", asFloat(paramtersfile[4]));	
+	defineConstant("Small_Timer", asFloat(paramtersfile[5]));	
+	defineConstant("decrease_amount", asFloat(paramtersfile[6]));	
+
+
+	if (exists('K')==0){
+    defineConstant("K", 30);  // carrying-capacity per unit square (roughly)
+	}
+	
+    defineConstant("SD", sigma);  // sigma_D, the dispersal distance
+    defineConstant("SI", sigma);  // sigma_I, the spatial interaction distance
+    defineConstant("SM", SI);  // sigma_M, the mate choice distance
+    defineConstant("L", 4);    // mean lifetime at stationarity
+    defineConstant("W", 10.0);  // width and height of the simulated area
+    defineConstant("G", 1e8);  // genome length
+    defineConstant("FECUN", 1/L); // mean fecundity
+    defineConstant("RHO", FECUN/((1+FECUN) * K)); // constant in spatial competition function
+
+	defineConstant("LAYERS",asInteger(strsplit(asString(paramtersfile[8]),' ')));   //// How many
+	
+
+	defineConstant("PERCENTAGE", LAYERS[MAX_TICKS+2]);	//// last 
+	
+	if (exists('LIMIT')==0){
+		defineConstant('LIMIT',20);
+	}
+	
+	
+	
+	if (exists('MODE')==0){
+	defineConstant("MODE",asString(paramtersfile[9]));
+	}
+	
+	
+	/////////////// MODE SELECTION
+	/////////////// SELECT WHICH WAY THE COLLAPSE IS GONNA HAPPEN
+	
+	if (MODE=='P') {
+		if (exists('MFILE')==0){
+			defineConstant("RGSV", asInteger(strsplit(asString(paramtersfile[7]),' ')));	////RSV = Random Grid Shutdown Vector
+			defineConstant('KEYWORD','PAR_INPUT');
+		}
+		
+		if (exists('MFILE')==1){
+			SEQ=asInteger(strsplit(asString(readFile(MFILE)),' '));
+			
+			defineConstant("RGSV", SEQ);	////RSV = Random Grid Shutdown Vector
+			defineConstant('KEYWORD',MFILE);
+		}
+		
+		
+	}
+	
+	
+	if (MODE=='R') {
+		
+		RandomSample=sample(seq(0,99),99,replace=F);	
+		defineConstant("RGSV", RandomSample);	////RSV = Random Grid Shutdown Vector
+		defineConstant('KEYWORD','RANDOM_SHUT');
+	}
+	
+	
+	
+	if (MODE=='C') {
+		
+		GRIDS=NULL;		
+		for ( REPO in 0:4 )
+		{   
+	        Li=matrix(rep(1,100),10,10);
+    		Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]=0;		
+    		Li[REPO:(ncol(Li)-(1+REPO)),REPO]=0;			
+    		Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]=0;			
+    		Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]=0;
+			
+			ToAdd=which(Li==0);
+			Shuffled=sample(ToAdd,length(ToAdd),replace=F);
+
+			GRIDS=c(GRIDS,Shuffled);
+    	}
+		
+
+		defineConstant("RGSV", GRIDS);	////RSV = Random Grid Shutdown Vector
+		defineConstant('KEYWORD','CIRCULAR');
+	}
+	
+	
+	if (MODE=='E'){
+		
+		PickInit=NULL;
+		GRIDS=NULL;
+		Li=matrix(rep(1,100),10,10);
+		REPO=0;
+		Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]=0;
+		PickInit=c(PickInit,which(Li==0));
+		Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]=1;
+		
+		Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]=0;
+		PickInit=c(PickInit,which(Li==0));
+		Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]=1;
+		
+		Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]=0;
+		PickInit=c(PickInit,rev(which(Li==0)));
+		Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]=1;
+		
+		Li[REPO:(ncol(Li)-(1+REPO)),REPO]=0;
+		PickInit=c(PickInit,rev(which(Li==0)));		
+		Li[REPO:(ncol(Li)-(1+REPO)),REPO]=1;
+
+		Start=sample(seq(0,length(PickInit)-4),1);
+		PickInit=PickInit[seq(Start,Start+3)];
+
+		Li[PickInit]=0;
+		ToAdd=which(Li==0);
+		GRIDS=c(GRIDS,ToAdd);
+		while (sum(Li)>0){
+			MARKED=NULL;
+			for (x in seq(0,9)){
+				for (y in seq(0,9)){
+						if (Li[x,y]==0) {
+							
+							if ((x+1<10) & (y+1< 10)){
+								if (Li[x+1,y+1]!=0){
+								Li[x+1,y+1]=9;
+								MARKED=c(MARKED,which(Li==9));
+								Li[x+1,y+1]=1;
+							}
+							}
+							
+							if ((x+1<10)){
+								if (Li[x+1,y]!=0){
+								Li[x+1,y]=9;
+								MARKED=c(MARKED,which(Li==9));
+								Li[x+1,y]=1;
+							}
+							}
+							
+							if ((y+1< 10)){
+								if (Li[x,y+1]!=0){
+								Li[x,y+1]=9;
+								MARKED=c(MARKED,which(Li==9));
+								Li[x,y+1]=1;
+							}
+							}
+							
+							if ((x-1>=0) & (y-1>=0)){
+								if (Li[x-1,y-1]!=0){
+								Li[x-1,y-1]=9;
+								MARKED=c(MARKED,which(Li==9));
+								Li[x-1,y-1]=1;
+							}
+							}
+							
+							if ((x-1>=0)){
+								if (Li[x-1,y]!=0){
+								Li[x-1,y]=9;
+								MARKED=c(MARKED,which(Li==9));
+								Li[x-1,y]=1;
+							}
+							}							
+							
+							if (y-1>=0){
+								if (Li[x,y-1]!=0){
+								Li[x,y-1]=9;
+								MARKED=c(MARKED,which(Li==9));
+								Li[x,y-1]=1;
+							}		
+							}							
+							
+						}
+					
+					
+			
+				}
+			}
+			Li[MARKED]=0;
+			GRIDS=c(MARKED,GRIDS);
+		}
+		
+		
+		
+	defineConstant("RGSV", unique(GRIDS));	////RSV = Random Grid Shutdown Vector
+	defineConstant('KEYWORD','PERIFERAL');
+	}
+	
+	///////////////////////////////////////////////////////////////////////////////////////////////	
+	
+	
+
+	defineConstant('OUT_NAME',paste(c('OUT_SED',asString(getSeed()),asString(ID),KEYWORD,'Sigma',asString(sigma),'LAYERS',MAX_TICKS+3,'PERCENTAGE',PERCENTAGE),'_')); ///Output name
+
+	
+    
+    // spatial competition
+    initializeInteractionType(1, "xy", reciprocal=T, maxDistance=SI * 3);
+    i1.setInteractionFunction("n", 1.0/(2*PI*SI^2), SI);
+    
+    // mate choice
+    initializeInteractionType(2, "xy", reciprocal=T, maxDistance=SM * 3);
+    i2.setInteractionFunction("n", 1.0/(2*PI*SM^2), SM);
+
+}
+
+
+
+
+
+
+
+
+
+reproduction() {
+	
+    mate = i2.drawByStrength(individual, 1);
+    if (mate.size()) {
+        nOff = rpois(1, FECUN);
+		POS=individual.spatialPosition; //// position of birther
+		
+		CircleOfPositions=c(c(SD,0),c(SD,SD),c(0,SD),c(-SD,SD),c(-SD,0),c(-SD,-SD),c(0,-SD),c(SD,-SD));  //// 8 points around individual at SD distance
+		AngleOfPositions=c(0,45,90,135,180,225,270,315);
+
+
+        for (i in seqLen(nOff)) {			
+			
+			Choices=c();
+			
+			for (x in seq(1,length(CircleOfPositions),2)){
+				
+				CIRCLEHERE=c(CircleOfPositions[x-1],CircleOfPositions[x]);  
+				POSHERE=(POS+CIRCLEHERE);                                    //// Position in circle around individual
+				RESOURCE=p1.spatialMapValue("map1", POSHERE);                //// Resource at position
+				Choices=c(Choices,RESOURCE);	                             //// add it to choice
+
+			}
+
+			// BEST=which(Choices==max(Choices));		 //// find best options	/// OLD
+			// if (size(BEST)>1){
+				// BEST=sample(BEST,1);	         //// if more than one 
+			// }
+			BEST=sample(seq(0,7),1,F,Choices);
+			Gamma = rnorm(1, 0, SD);             //// find new position towards the best choice
+			Theta1 = runif(1, ( AngleOfPositions[BEST] - 22.5), AngleOfPositions[BEST] + 22.5);          //// using this equation Xnew = Xold + Gamma*theta
+			
+			pos= POS + c((Gamma*cos(Theta1)),(Gamma*sin(Theta1))); //// the new position
+			// print(c(POS,pos));    ///seems ok
+			
+
+            if (p1.pointInBounds(pos)) {
+            	offspring = subpop.addCrossed(individual, mate);
+          		offspring.setSpatialPosition(pos);
+          	}
+			
+			
+        }
+    }
+    return;
+	
+}
+
+
+
+
+1 early() {
+	
+	if (   (length(LAYERS)<(MAX_TICKS+2)) ){   /////// FAIL SAFE - STOP RUN
+	print('ERROR: NOT MATCHING number of layers');
+	print(c('The Layers:',LAYERS,' Number of layers (not including 0)',MAX_TICKS+2,' Percentage of ShutDown',PERCENTAGE,'Final Layer',LAYERS[MAX_TICKS+2],'Length of Shutdown',length(RGSV)));
+	sim.simulationFinished();
+	
+	}
+
+
+	
+	
+	
+	
+	
+    sim.addSubpop("p1", asInteger(K * W * W)); //// Initial Size
+    p1.setSpatialBounds(c(0, 0, W, W));  //// Spatial Bounds of Population
+    for (ind in p1.individuals) {
+        ind.setSpatialPosition(p1.pointUniform()); //// Set up Population
+    }
+		
+		
+	defineConstant("mapValues", rep(1.0,100));        ////////////// Create X values to be used in the map
+	p1.setValue("REP", 1);           ///// Used for changing Enviromenet
+	
+	p1.setValue("L", mapValues);     ///// List of map values
+
+
+
+	p1.setValue("LEN_WINDOW",100000);  ////length of window we want to do calculations/metrics on
+	p1.setValue("WINDOWS_XP",seq(0,sim.chromosome.lastPosition,100000));  ///// Split Chromosome into windows and store them
+	
+	
+	p1.defineSpatialMap("map1", "xy", c(10,10), mapValues, interpolate=T,valueRange=c(0.0, 1.0), colors=c("black", "white"));   ////set up the background capacity map
+	
+	defineConstant("pdfPath", writeTempFile("plot_", ".pdf", "")); ////used to init plotting	
+	sim.setValue("pdfOpened", F);  ////////used to init plotting
+
+	//// prepare output files
+	writeFile(OUT_NAME+'_timeline.txt',paste(c('Mean_Pi','Std_Pi','Generation','Population_Size','Mean_Envir_Experience','Total_Env_Cap'),'\t'),append=F);	
+	writeFile(OUT_NAME+'.all_pos',paste(c('Generation','Individual_ID','X_pos','Y_pos','Enviroment_capacity'),'\t'),append=F); 
+	writeFile(OUT_NAME+'.sampled_pos',paste(c('Generation','Individual_ID','X_pos','Y_pos','Enviroment_capacity'),'\t'),append=F); 
+	
+    i1.evaluate();
+}
+
+
+
+early() {
+    i1.evaluate(p1);
+    inds = p1.individuals;
+    competition = i1.totalOfNeighborStrengths(inds);
+	
+	location = inds.spatialPosition; ////////get the x and y value of each individual
+	optimum = p1.spatialMapValue("map1", location);
+	
+    inds.fitnessScaling = pmin(0.95, 1/(1 + RHO * competition)) * optimum;    
+    // scale fitness at edges
+    inds.fitnessScaling = inds.fitnessScaling * pmin(sqrt(inds.x/SI), 1.0) * pmin(sqrt(inds.y/SI), 1.0) * pmin(sqrt((W - inds.x)/SI), 1.0) * pmin(sqrt((W - inds.y)/SI), 1.0);
+	
+}
+
+
+1: late() {
+	// to be ready for mate choice
+   i2.evaluate(p1);
+}
+
+
+2: late() {
+	GEN=sim.generation;
+	
+	if (p1.individualCount<=1){
+	print('Population Total Collapse');
+	sim.simulationFinished();
+	}
+	
+	
+	if ( (GEN%Big_Timer==0) & (p1.getValue("REP")<=(MAX_TICKS+1)) & ( GEN < Start_INC ) & ( GEN>= (Start_DEC+Big_Timer) ) )
+	{////////////// Moving into inner row of matrix //////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+		REPO=p1.getValue("REP");
+		p1.setValue("REP", (REPO+1));
+	
+	}///////////////////////////////////
+	
+	
+	if( (GEN%Small_Timer==0) & ( sum(p1.getValue("L")) > LIMIT ) & ( GEN < Start_INC ) & ( GEN>= Start_DEC ) )
+	{//////////////// Changing values of row(layer) /////////////////////////////////
+		
+		REPZ=p1.getValue("REP");
+        p1.setValue("SHUT_GRIDS",RGSV[0:LAYERS[REPZ]]);
+		SHUT_GRIDS=p1.getValue("SHUT_GRIDS");
+
+		
+		Li = p1.getValue("L");
+		
+		Li[SHUT_GRIDS]=Li[SHUT_GRIDS] - decrease_amount;
+		Zeroz=which(Li<0.1);
+		Li[Zeroz]=0;
+		Li=matrix(Li,10,10);
+		
+
+    	p1.defineSpatialMap("map1", "xy", c(10, 10), Li, interpolate=T,valueRange=c(0.0, 1.0), colors=c("black", "white"));
+    	p1.setValue("L", Li);
+    	print(matrix(Li,10,10));
+    	
+    }////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+ 
+   
+   	if ( ( GEN%Big_Timer==0 ) & ( p1.getValue("REP")>0 ) &  ( GEN>=(Start_INC) ) )
+    {////////////// Map Values changing (plus) ////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    	REPO=p1.getValue("REP");
+    	p1.setValue("REP", (REPO-1));
+    
+    
+    }//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   
+   
+ 
+
+   
+    if ( ( GEN%Small_Timer==0 ) & (sum(p1.getValue("L")) < 100) &  ( GEN>=Start_INC ) )
+    {
+		
+		REPZ=p1.getValue("REP");
+        p1.setValue("SHUT_GRIDS",RGSV[LAYERS[REPZ]:99]);
+		SHUT_GRIDS=p1.getValue("SHUT_GRIDS");
+    	Li = p1.getValue("L");
+		
+		Li[SHUT_GRIDS]=Li[SHUT_GRIDS] + decrease_amount;
+		Onez=which(Li>0.9);
+		Li[Onez]=1;
+		Li=matrix(Li,10,10);
+		
+		
+    
+    	p1.defineSpatialMap("map1", "xy", c(10, 10), Li, interpolate=T,valueRange=c(0.0, 1.0), colors=c("black", "white"));
+    	p1.setValue("L", Li);
+    	print(matrix(Li,10,10));
+    	
+    }
+
+
+
+	if ( (GEN>=0 & GEN%5000==0)     |     ( (GEN>=Start_DEC) & (GEN%2==0) & (GEN<=(Start_INC)) )   |    (  (GEN>=Start_DEC-10000) & (GEN<=Start_DEC) & (GEN%100==0) )     |     (  (GEN<=Start_INC+10000) & (GEN>=Start_INC) & (GEN%100==0)  ))
+	{///when to make matrics//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		
+		
+		
+		if (size(p1.individuals)>=200)  
+			{			
+			INDS=sample(p1.individuals,200,F); //// sample 100 individuals 
+			}
+
+			
+		else
+			{
+			INDS=sample(p1.individuals,size(p1.individuals),F);	
+			}
+
+		
+
+		MY_WINDOWS=p1.getValue("WINDOWS_XP"); /////Get the Windows
+		LENGTH_OF_WINDOW=p1.getValue("LEN_WINDOW");  ////gap of windows
+
+		mysamples = INDS; ////select random individuals for calcs
+
+		HETERO=subpopHeterozygosity(p1,size(mysamples)); ////calc heterozy
+		HETEROSD=subpopHeterozygositystd(p1,size(mysamples));
+		NEWBORN=which(p1.individuals.age==0);
+		RES=mean(p1.spatialMapValue("map1", p1.individuals.spatialPosition));
+		
+
+		
+		writeFile(OUT_NAME+'_timeline.txt',paste(c(asString(HETERO),asString(HETEROSD),asString(GEN),asString(p1.individualCount),asString(RES),sum(p1.getValue("L"))),'\t'),append=T); /////write it out in our file
+		
+		
+		deleteFile(paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.vcf'); ///// Delete previous vcf,gz,tbi file with same name if exist then output vcf,zip it and tabulate it
+		deleteFile(paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.vcf.gz');
+		deleteFile(paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.vcf.tbi');
+		INDS.genomes.outputVCF(filePath = paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.vcf',simplifyNucleotides = F);
+		system(paste(c("bgzip",paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.vcf')," "));	
+		system(paste(c("tabix -p vcf",paste(c(OUT_NAME,'GEN',asString(GEN)),'_')+'.vcf.gz')," "));	
+		
+		
+		///////////////////////////////////////////////////// for all individuals in pop
+		
+		///// do the same with positions
+		ALLPOS=NULL;
+		
+		for (INDHERE in p1.individuals){ /// costly in time
+		ALLPOS=c(ALLPOS,paste(c(asString(GEN),asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'));	
+		}
+		writeFile(OUT_NAME+'.all_pos',paste(ALLPOS,'\n'),append=T);
+		
+		
+		//////////////////////////////////////////////////// for individuals sampled for vcf file
+		
+		
+		SAMPLEPOS=NULL;
+		
+		for (INDHERE in INDS){ ///// not so much
+		SAMPLEPOS=c(SAMPLEPOS,paste(c(asString(GEN),asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'));	
+			 // writeFile(paste(c(OUT_NAME,asString(GEN),'.sampled_pos'),'_'),paste(c(asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'),append=T);  ////  x and y positions
+		}
+		writeFile(OUT_NAME+'.sampled_pos',paste(SAMPLEPOS,'\n'),append=T);
+
+		
+	}////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+print(paste(c('Population Size: ',p1.individualCount),'\t'));
+print(paste(c('Generation: ',sim.generation),'\t'));
+print(clock());
+print(date());
+print(sigma);
+print(p1.getValue("SHUT_GRIDS"));
+print(RGSV);
+}
+
+
+
+
+150000 late() { /////end time
+// print(system(paste(c("bgzip",)," ")));
+///// zip position and vcf files!
+// writeFile(OUT_NAME,paste(c(asString(RGSV),'\t'),append=T);
+}
