@@ -1,2 +1,3 @@
 
 Updated parameter files + script: number of layers is now clearer, 'percentage' is always the last layer to be used.
+Changed frequency of metric generation depending on how close we are to the collapse.
