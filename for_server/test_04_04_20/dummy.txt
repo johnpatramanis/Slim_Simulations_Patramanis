@@ -1,0 +1,1 @@
+Update: removed metrics such as avg reprodcution deaths birth because of time consumption. Updated frequency of metric generation.
