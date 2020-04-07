@@ -15,15 +15,15 @@ initialize() {
 	defineConstant("start", clock());	///// to track time	
 	if (exists("seed")==1){
 		setSeed(asInteger(seed));       ///// set a seed from input
-		}
-
+	}
+	
 	
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//// Setting up the simulation
-
+	
 	initializeSLiMModelType("nonWF");
-    initializeSLiMOptions(dimensionality="xy", nucleotideBased=F);	
+	initializeSLiMOptions(dimensionality="xy", nucleotideBased=F);
 	initializeTreeSeq();
 	initializeMutationType("m1", 0.0, "f", 0.0);    //// 1 kind of mutation - Neutral
 	initializeGenomicElementType("g1", m1, 1);      ////
@@ -32,56 +32,56 @@ initialize() {
 	initializeRecombinationRate(10e-09);            ///// FLAT Reacombination Rate
 	
 	
-
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
+	
+	
+	
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//// PARAMETERS
-
+	
 	
 	if (exists("PAR")==0){
-	defineConstant("paramtersfile",readFile('Parameters_File.txt'));
+		defineConstant("paramtersfile",readFile('Parameters_File.txt'));
 	}
 	
 	else{
-	defineConstant("paramtersfile",readFile(PAR));
+		defineConstant("paramtersfile",readFile(PAR));
 	}
 	
 	
 	defineConstant("ID", paste(strsplit(paramtersfile[0],'')[0:(length(strsplit(paramtersfile[0],''))-1)],''));
-
+	
 	defineConstant("MAX_TICKS", asFloat(paramtersfile[1])-3);
-
-
+	
+	
 	if (exists('sigma')==0){
-		defineConstant("sigma", 0.1);	
-	}
-
-
-	defineConstant("Start_DEC", asFloat(paramtersfile[2]));	
-	defineConstant("Start_INC", asFloat(paramtersfile[3]));	
-	defineConstant("Big_Timer", asFloat(paramtersfile[4]));	
-	defineConstant("Small_Timer", asFloat(paramtersfile[5]));	
-	defineConstant("decrease_amount", asFloat(paramtersfile[6]));	
-
-
-	if (exists('K')==0){
-    defineConstant("K", 30);  // carrying-capacity per unit square (roughly)
+		defineConstant("sigma", 0.1);
 	}
 	
-    defineConstant("SD", sigma);  // sigma_D, the dispersal distance
-    defineConstant("SI", sigma);  // sigma_I, the spatial interaction distance
-    defineConstant("SM", SI);  // sigma_M, the mate choice distance
-    defineConstant("L", 4);    // mean lifetime at stationarity
-    defineConstant("W", 10.0);  // width and height of the simulated area
-    defineConstant("G", 1e8);  // genome length
-    defineConstant("FECUN", 1/L); // mean fecundity
-    defineConstant("RHO", FECUN/((1+FECUN) * K)); // constant in spatial competition function
-
+	
+	defineConstant("Start_DEC", asFloat(paramtersfile[2]));
+	defineConstant("Start_INC", asFloat(paramtersfile[3]));
+	defineConstant("Big_Timer", asFloat(paramtersfile[4]));
+	defineConstant("Small_Timer", asFloat(paramtersfile[5]));
+	defineConstant("decrease_amount", asFloat(paramtersfile[6]));
+	
+	
+	if (exists('K')==0){
+		defineConstant("K", 30);  // carrying-capacity per unit square (roughly)
+	}
+	
+	defineConstant("SD", sigma);  // sigma_D, the dispersal distance
+	defineConstant("SI", sigma);  // sigma_I, the spatial interaction distance
+	defineConstant("SM", SI);  // sigma_M, the mate choice distance
+	defineConstant("L", 4);    // mean lifetime at stationarity
+	defineConstant("W", 10.0);  // width and height of the simulated area
+	defineConstant("G", 1e8);  // genome length
+	defineConstant("FECUN", 1/L); // mean fecundity
+	defineConstant("RHO", FECUN/((1+FECUN) * K)); // constant in spatial competition function
+	
 	defineConstant("LAYERS",asInteger(strsplit(asString(paramtersfile[8]),' ')));   //// How many
 	
-
+	
 	defineConstant("PERCENTAGE", LAYERS[MAX_TICKS+2]);	//// last 
 	
 	if (exists('LIMIT')==0){
@@ -91,180 +91,179 @@ initialize() {
 	
 	
 	if (exists('MODE')==0){
-	defineConstant("MODE",asString(paramtersfile[9]));
+		defineConstant("MODE",asString(paramtersfile[9]));
 	}
-	defineConstant("TERMINATION",paramtersfile[10]);
 	
 	
 	
 	
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////// MODE SELECTION
 	/////////////// SELECT WHICH WAY THE COLLAPSE IS GONNA HAPPEN
-		
-		if (MODE=='P') {
-			if (exists('MFILE')==0){
-				defineConstant("RGSV", asInteger(strsplit(asString(paramtersfile[7]),' ')));	////RSV = Random Grid Shutdown Vector
-				defineConstant('KEYWORD','PAR_INPUT');
-			}
-			
-			if (exists('MFILE')==1){
-				SEQ=asInteger(strsplit(asString(readFile(MFILE)),' '));
-				
-				defineConstant("RGSV", SEQ);	////RSV = Random Grid Shutdown Vector
-				defineConstant('KEYWORD',MFILE);
-			}
-			
-			
+	
+	if (MODE=='P') {
+		if (exists('MFILE')==0){
+			defineConstant("RGSV", asInteger(strsplit(asString(paramtersfile[7]),' ')));	////RSV = Random Grid Shutdown Vector
+			defineConstant('KEYWORD','PAR_INPUT');
 		}
 		
-		
-		if (MODE=='R') {
+		if (exists('MFILE')==1){
+			SEQ=asInteger(strsplit(asString(readFile(MFILE)),' '));
 			
-			RandomSample=sample(seq(0,99),99,replace=F);	
-			defineConstant("RGSV", RandomSample);	////RSV = Random Grid Shutdown Vector
-			defineConstant('KEYWORD','RANDOM_SHUT');
+			defineConstant("RGSV", SEQ);	////RSV = Random Grid Shutdown Vector
+			defineConstant('KEYWORD',MFILE);
 		}
+	
+	
+	}
+	
+	
+	if (MODE=='R') {
 		
+		RandomSample=sample(seq(0,99),99,replace=F);
+		defineConstant("RGSV", RandomSample);	////RSV = Random Grid Shutdown Vector
+		defineConstant('KEYWORD','RANDOM_SHUT');
+	}
+	
+	
+	
+	if (MODE=='C') {
 		
-		
-		if (MODE=='C') {
-			
-			GRIDS=NULL;		
-			for ( REPO in 0:4 )
-			{   
-				Li=matrix(rep(1,100),10,10);
-				Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]=0;		
-				Li[REPO:(ncol(Li)-(1+REPO)),REPO]=0;			
-				Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]=0;			
-				Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]=0;
-				
-				ToAdd=which(Li==0);
-				Shuffled=sample(ToAdd,length(ToAdd),replace=F);
-
-				GRIDS=c(GRIDS,Shuffled);
-			}
-			
-
-			defineConstant("RGSV", GRIDS);	////RSV = Random Grid Shutdown Vector
-			defineConstant('KEYWORD','CIRCULAR');
-		}
-		
-		
-		if (MODE=='E'){
-			
-			PickInit=NULL;
-			GRIDS=NULL;
+		GRIDS=NULL;
+		for ( REPO in 0:4 )
+		{
 			Li=matrix(rep(1,100),10,10);
-			REPO=0;
 			Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]=0;
-			PickInit=c(PickInit,which(Li==0));
-			Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]=1;
-			
-			Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]=0;
-			PickInit=c(PickInit,which(Li==0));
-			Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]=1;
-			
-			Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]=0;
-			PickInit=c(PickInit,rev(which(Li==0)));
-			Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]=1;
-			
 			Li[REPO:(ncol(Li)-(1+REPO)),REPO]=0;
-			PickInit=c(PickInit,rev(which(Li==0)));		
-			Li[REPO:(ncol(Li)-(1+REPO)),REPO]=1;
-
-			Start=sample(seq(0,length(PickInit)-4),1);
-			PickInit=PickInit[seq(Start,Start+3)];
-
-			Li[PickInit]=0;
+			Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]=0;
+			Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]=0;
+			
 			ToAdd=which(Li==0);
-			GRIDS=c(GRIDS,ToAdd);
-			while (sum(Li)>0){
-				MARKED=NULL;
-				for (x in seq(0,9)){
-					for (y in seq(0,9)){
-							if (Li[x,y]==0) {
-								
-								if ((x+1<10) & (y+1< 10)){
-									if (Li[x+1,y+1]!=0){
-									Li[x+1,y+1]=9;
-									MARKED=c(MARKED,which(Li==9));
-									Li[x+1,y+1]=1;
-								}
-								}
-								
-								if ((x+1<10)){
-									if (Li[x+1,y]!=0){
-									Li[x+1,y]=9;
-									MARKED=c(MARKED,which(Li==9));
-									Li[x+1,y]=1;
-								}
-								}
-								
-								if ((y+1< 10)){
-									if (Li[x,y+1]!=0){
-									Li[x,y+1]=9;
-									MARKED=c(MARKED,which(Li==9));
-									Li[x,y+1]=1;
-								}
-								}
-								
-								if ((x-1>=0) & (y-1>=0)){
-									if (Li[x-1,y-1]!=0){
-									Li[x-1,y-1]=9;
-									MARKED=c(MARKED,which(Li==9));
-									Li[x-1,y-1]=1;
-								}
-								}
-								
-								if ((x-1>=0)){
-									if (Li[x-1,y]!=0){
-									Li[x-1,y]=9;
-									MARKED=c(MARKED,which(Li==9));
-									Li[x-1,y]=1;
-								}
-								}							
-								
-								if (y-1>=0){
-									if (Li[x,y-1]!=0){
-									Li[x,y-1]=9;
-									MARKED=c(MARKED,which(Li==9));
-									Li[x,y-1]=1;
-								}		
-								}							
-								
+			Shuffled=sample(ToAdd,length(ToAdd),replace=F);
+			
+			GRIDS=c(GRIDS,Shuffled);
+		}
+		
+		
+		defineConstant("RGSV", GRIDS);	////RSV = Random Grid Shutdown Vector
+		defineConstant('KEYWORD','CIRCULAR');
+	}
+	
+	
+	if (MODE=='E'){
+		
+		PickInit=NULL;
+		GRIDS=NULL;
+		Li=matrix(rep(1,100),10,10);
+		REPO=0;
+		Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]=0;
+		PickInit=c(PickInit,which(Li==0));
+		Li[REPO,(REPO+1):(ncol(Li)-(REPO+1))]=1;
+		
+		Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]=0;
+		PickInit=c(PickInit,which(Li==0));
+		Li[(REPO+1):(nrow(Li)-(2+REPO)),nrow(Li)-(REPO+1)]=1;
+		
+		Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]=0;
+		PickInit=c(PickInit,rev(which(Li==0)));
+		Li[nrow(Li)-(1+REPO),(REPO+1):(ncol(Li)-(REPO+1))]=1;
+		
+		Li[REPO:(ncol(Li)-(1+REPO)),REPO]=0;
+		PickInit=c(PickInit,rev(which(Li==0)));
+		Li[REPO:(ncol(Li)-(1+REPO)),REPO]=1;
+		
+		Start=sample(seq(0,length(PickInit)-4),1);
+		PickInit=PickInit[seq(Start,Start+3)];
+		
+		Li[PickInit]=0;
+		ToAdd=which(Li==0);
+		GRIDS=c(GRIDS,ToAdd);
+		while (sum(Li)>0){
+			MARKED=NULL;
+			for (x in seq(0,9)){
+				for (y in seq(0,9)){
+					if (Li[x,y]==0) {
+						
+						if ((x+1<10) & (y+1< 10)){
+							if (Li[x+1,y+1]!=0){
+								Li[x+1,y+1]=9;
+								MARKED=c(MARKED,which(Li==9));
+								Li[x+1,y+1]=1;
 							}
+						}
 						
+						if ((x+1<10)){
+							if (Li[x+1,y]!=0){
+								Li[x+1,y]=9;
+								MARKED=c(MARKED,which(Li==9));
+								Li[x+1,y]=1;
+							}
+						}
 						
-				
+						if ((y+1< 10)){
+							if (Li[x,y+1]!=0){
+								Li[x,y+1]=9;
+								MARKED=c(MARKED,which(Li==9));
+								Li[x,y+1]=1;
+							}
+						}
+						
+						if ((x-1>=0) & (y-1>=0)){
+							if (Li[x-1,y-1]!=0){
+								Li[x-1,y-1]=9;
+								MARKED=c(MARKED,which(Li==9));
+								Li[x-1,y-1]=1;
+							}
+						}
+						
+						if ((x-1>=0)){
+							if (Li[x-1,y]!=0){
+								Li[x-1,y]=9;
+								MARKED=c(MARKED,which(Li==9));
+								Li[x-1,y]=1;
+							}
+						}
+						
+						if (y-1>=0){
+							if (Li[x,y-1]!=0){
+								Li[x,y-1]=9;
+								MARKED=c(MARKED,which(Li==9));
+								Li[x,y-1]=1;
+							}
+						}
+					
 					}
+				
+				
+				
 				}
-				Li[MARKED]=0;
-				GRIDS=c(MARKED,GRIDS);
 			}
-			
-			
-			
+			Li[MARKED]=0;
+			GRIDS=c(MARKED,GRIDS);
+		}
+		
+		
+		
 		defineConstant("RGSV", unique(GRIDS));	////RSV = Random Grid Shutdown Vector
 		defineConstant('KEYWORD','PERIFERAL');
-		}
+	}
 	
 	///////////////////////////////////////////////////////////////////////////////////////////////	
 	///////////////////////////////////////////////////////////////////////////////////////////////
 	
-
-	defineConstant('OUT_NAME',paste(c('OUT_SED',asString(getSeed()),asString(ID),KEYWORD,'Sigma',asString(sigma),'LAYERS',MAX_TICKS+3,'PERCENTAGE',PERCENTAGE),'_')); ///Output name
-
 	
-    
-    // spatial competition
-    initializeInteractionType(1, "xy", reciprocal=T, maxDistance=SI * 3);
-    i1.setInteractionFunction("n", 1.0/(2*PI*SI^2), SI);
-    
-    // mate choice
-    initializeInteractionType(2, "xy", reciprocal=T, maxDistance=SM * 3);
-    i2.setInteractionFunction("n", 1.0/(2*PI*SM^2), SM);
+	defineConstant('OUT_NAME',paste(c('OUT_SED',asString(getSeed()),asString(ID),KEYWORD,'Sigma',asString(sigma),'LAYERS',MAX_TICKS+3,'PERCENTAGE',PERCENTAGE),'_')); ///Output name
+	
+	
+	
+	// spatial competition
+	initializeInteractionType(1, "xy", reciprocal=T, maxDistance=SI * 3);
+	i1.setInteractionFunction("n", 1.0/(2*PI*SI^2), SI);
+	
+	// mate choice
+	initializeInteractionType(2, "xy", reciprocal=T, maxDistance=SM * 3);
+	i2.setInteractionFunction("n", 1.0/(2*PI*SM^2), SM);
 
 }
 
@@ -278,45 +277,45 @@ initialize() {
 
 reproduction() {
 	
-    mate = i2.drawByStrength(individual, 1);
-    if (mate.size()) {
-        nOff = rpois(1, FECUN);
+	mate = i2.drawByStrength(individual, 1);
+	if (mate.size()) {
+		nOff = rpois(1, FECUN);
 		POS=individual.spatialPosition; //// position of birther
 		
 		CircleOfPositions=c(c(SD,0),c(SD,SD),c(0,SD),c(-SD,SD),c(-SD,0),c(-SD,-SD),c(0,-SD),c(SD,-SD));  //// 8 points around individual at SD distance
 		AngleOfPositions=c(0,45,90,135,180,225,270,315);
-
-
-        for (i in seqLen(nOff)) {			
+		
+		
+		for (i in seqLen(nOff)) {
 			
 			Choices=c();
 			
 			for (x in seq(1,length(CircleOfPositions),2)){
 				
-				CIRCLEHERE=c(CircleOfPositions[x-1],CircleOfPositions[x]);  
+				CIRCLEHERE=c(CircleOfPositions[x-1],CircleOfPositions[x]);
 				POSHERE=(POS+CIRCLEHERE);                                    //// Position in circle around individual
 				RESOURCE=p1.spatialMapValue("map1", POSHERE);                //// Resource at position
 				Choices=c(Choices,RESOURCE);	                             //// add it to choice
-
+			
 			}
-
+			
 			BEST=sample(seq(0,7),1,F,Choices); //// pick direction to move, chance of picking is scaled by enviroment of that direction
 			Gamma = rnorm(1, 0, SD);           //// find new position towards the best choice
 			Theta1 = runif(1, ( AngleOfPositions[BEST] - 22.5), AngleOfPositions[BEST] + 22.5);   //// using this equation Xnew = Xold + Gamma*theta
 			
 			pos= POS + c((Gamma*cos(Theta1)),(Gamma*sin(Theta1))); //// the new position
-
-
-            if (p1.pointInBounds(pos)) { //// Check if new position is within bounds, make birth happen
-            	offspring = subpop.addCrossed(individual, mate);
-          		offspring.setSpatialPosition(pos);
-          	}
 			
 			
-        }
-    }
-    return;
-	
+			if (p1.pointInBounds(pos)) { //// Check if new position is within bounds, make birth happen
+				offspring = subpop.addCrossed(individual, mate);
+				offspring.setSpatialPosition(pos);
+			}
+		
+		
+		}
+	}
+	return;
+
 }
 
 
@@ -327,36 +326,37 @@ reproduction() {
 1 early() {
 	
 	if (   (length(LAYERS)<(MAX_TICKS+2)) ){   /////// FAIL SAFE - STOP RUN
-	print('ERROR: NOT MATCHING number of layers');
-	print(c('The Layers:',LAYERS,' Number of layers (not including 0)',MAX_TICKS+2,' Percentage of ShutDown',PERCENTAGE,'Final Layer',LAYERS[MAX_TICKS+2],'Length of Shutdown',length(RGSV)));
-	sim.simulationFinished();
+		print('ERROR: NOT MATCHING number of layers');
+		print(c('The Layers:',LAYERS,' Number of layers (not including 0)',MAX_TICKS+2,' Percentage of ShutDown',PERCENTAGE,'Final Layer',LAYERS[MAX_TICKS+2],'Length of Shutdown',length(RGSV)));
+		sim.simulationFinished();
 	
 	}
-
 	
 	
-    sim.addSubpop("p1", asInteger(K * W * W)); //// Initial Size
-    p1.setSpatialBounds(c(0, 0, W, W));  //// Spatial Bounds of Population
-    for (ind in p1.individuals) {
-        ind.setSpatialPosition(p1.pointUniform()); //// Set up Population
-    }
-		
-		
+	
+	sim.addSubpop("p1", asInteger(K * W * W)); //// Initial Size
+	p1.setSpatialBounds(c(0, 0, W, W));  //// Spatial Bounds of Population
+	for (ind in p1.individuals) {
+		ind.setSpatialPosition(p1.pointUniform()); //// Set up Population
+	}
+	
+	
 	defineConstant("mapValues", rep(1.0,100));        ////////////// Create X values to be used in the map
 	p1.setValue("REP", 1);           ///// Used for changing Enviromenet
 	
 	p1.setValue("L", mapValues);     ///// List of map values
-
-
+	
+	
 	
 	p1.defineSpatialMap("map1", "xy", c(10,10), mapValues, interpolate=T,valueRange=c(0.0, 1.0), colors=c("black", "white"));   ////set up the background capacity map
 	
-
-	//// prepare output files
-	writeFile(OUT_NAME+'_timeline.txt',paste(c('Generation','Population_Size','Mean_Envir_Experience','Total_Env_Cap'),'\t'),append=F);	
-	writeFile(OUT_NAME+'.all_pos',paste(c('Generation','Individual_ID','X_pos','Y_pos','Enviroment_capacity'),'\t'),append=F); 
 	
-    i1.evaluate();
+	//// prepare output files
+	writeFile(OUT_NAME+'_timeline.txt',paste(c('Generation','Population_Size','Mean_Envir_Experience','Total_Env_Cap'),'\t'),append=F);
+	writeFile(OUT_NAME+'.all_pos',paste(c('Generation','Individual_ID','X_pos','Y_pos','Enviroment_capacity'),'\t'),append=F);
+	writeFile(OUT_NAME+'.Kgrid',paste(c('Generation','Kgrid'),'\t'),append=F);
+	
+	i1.evaluate();
 }
 
 
@@ -364,25 +364,25 @@ reproduction() {
 
 
 early() {
-    i1.evaluate(p1);
-    inds = p1.individuals;
-    competition = i1.totalOfNeighborStrengths(inds);
+	i1.evaluate(p1);
+	inds = p1.individuals;
+	competition = i1.totalOfNeighborStrengths(inds);
 	
 	location = inds.spatialPosition; ////////get the x and y value of each individual
 	optimum = p1.spatialMapValue("map1", location);
 	
-    inds.fitnessScaling = pmin(0.95, 1/(1 + RHO * competition)) * optimum;  
+	inds.fitnessScaling = pmin(0.95, 1/(1 + RHO * competition)) * optimum;
 	
-    /// scale fitness at edges
-    inds.fitnessScaling = inds.fitnessScaling * pmin(sqrt(inds.x/SI), 1.0) * pmin(sqrt(inds.y/SI), 1.0) * pmin(sqrt((W - inds.x)/SI), 1.0) * pmin(sqrt((W - inds.y)/SI), 1.0);
-	
+	/// scale fitness at edges
+	inds.fitnessScaling = inds.fitnessScaling * pmin(sqrt(inds.x/SI), 1.0) * pmin(sqrt(inds.y/SI), 1.0) * pmin(sqrt((W - inds.x)/SI), 1.0) * pmin(sqrt((W - inds.y)/SI), 1.0);
+
 }
 
 
 
 1: late() {
 	// to be ready for mate choice
-   i2.evaluate(p1);
+	i2.evaluate(p1);
 }
 
 
@@ -391,18 +391,18 @@ early() {
 2: late() {
 	
 	GEN=sim.generation;
-
+	
 	
 	if (p1.individualCount<=1)
 	{//// Terminate and print message if there is a collapse
-	print('Population Total Collapse');
-	sim.simulationFinished();
+		print('Population Total Collapse');
+		sim.simulationFinished();
 	}
 	
-
-
-
-
+	
+	
+	
+	
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
@@ -410,97 +410,97 @@ early() {
 	//// Control of Enviroment Collpase
 	
 	
-		if ( (GEN%Big_Timer==0) & (p1.getValue("REP")<=(MAX_TICKS+1)) & ( GEN < Start_INC ) & ( GEN>= (Start_DEC+Big_Timer) ) )
-		{//// Moving into inner row of matrix 
+	if ( (GEN%Big_Timer==0) & (p1.getValue("REP")<=(MAX_TICKS+1)) & ( GEN < Start_INC ) & ( GEN>= (Start_DEC+Big_Timer) ) )
+	{//// Moving into inner row of matrix 
 		
-			REPO=p1.getValue("REP");
-			p1.setValue("REP", (REPO+1));
+		REPO=p1.getValue("REP");
+		p1.setValue("REP", (REPO+1));
+	
+	}
+	
+	
+	if( (GEN%Small_Timer==0) & ( sum(p1.getValue("L")) > LIMIT ) & ( GEN < Start_INC ) & ( GEN>= Start_DEC ) )
+	{////Changing values of row(layer) 
 		
-		}
+		REPZ=p1.getValue("REP");
+		p1.setValue("SHUT_GRIDS",RGSV[0:LAYERS[REPZ]]);
+		SHUT_GRIDS=p1.getValue("SHUT_GRIDS");
 		
 		
-		if( (GEN%Small_Timer==0) & ( sum(p1.getValue("L")) > LIMIT ) & ( GEN < Start_INC ) & ( GEN>= Start_DEC ) )
-		{////Changing values of row(layer) 
-			
-			REPZ=p1.getValue("REP");
-			p1.setValue("SHUT_GRIDS",RGSV[0:LAYERS[REPZ]]);
-			SHUT_GRIDS=p1.getValue("SHUT_GRIDS");
-
-			
-			Li = p1.getValue("L");
-			
-			Li[SHUT_GRIDS]=Li[SHUT_GRIDS] - decrease_amount;
-			Zeroz=which(Li<0.1);
-			Li[Zeroz]=0;
-			Li=matrix(Li,10,10);
-			
-
-			p1.defineSpatialMap("map1", "xy", c(10, 10), Li, interpolate=T,valueRange=c(0.0, 1.0), colors=c("black", "white"));
-			p1.setValue("L", Li);
-			print(matrix(Li,10,10));
-			
-		}
-
-
-
-
+		Li = p1.getValue("L");
+		
+		Li[SHUT_GRIDS]=Li[SHUT_GRIDS] - decrease_amount;
+		Zeroz=which(Li<0.1);
+		Li[Zeroz]=0;
+		Li=matrix(Li,10,10);
+		
+		
+		p1.defineSpatialMap("map1", "xy", c(10, 10), Li, interpolate=T,valueRange=c(0.0, 1.0), colors=c("black", "white"));
+		p1.setValue("L", Li);
+//		print(matrix(Li,10,10));
+	
+	}
+	
+	
+	
+	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	//// Control of Enviroment Regrowth
-
-	 
-	   
-		if ( ( GEN%Big_Timer==0 ) & ( p1.getValue("REP")>0 ) &  ( GEN>=(Start_INC) ) )
-		{///// Moving to outwards layers
+	
+	
+	
+	if ( ( GEN%Big_Timer==0 ) & ( p1.getValue("REP")>0 ) &  ( GEN>=(Start_INC) ) )
+	{///// Moving to outwards layers
 		
-			REPO=p1.getValue("REP");
-			p1.setValue("REP", (REPO-1));
-		}
-	   
-	   
-		if ( ( GEN%Small_Timer==0 ) & (sum(p1.getValue("L")) < 100) &  ( GEN>=Start_INC ) )
-		{///// Adding back value to enviroment / regrowth of population
-			
-			REPZ=p1.getValue("REP");
-			p1.setValue("SHUT_GRIDS",RGSV[LAYERS[REPZ]:99]);
-			SHUT_GRIDS=p1.getValue("SHUT_GRIDS");
-			Li = p1.getValue("L");
-			
-			Li[SHUT_GRIDS]=Li[SHUT_GRIDS] + decrease_amount;
-			Onez=which(Li>0.9);
-			Li[Onez]=1;
-			Li=matrix(Li,10,10);
-			
-			
+		REPO=p1.getValue("REP");
+		p1.setValue("REP", (REPO-1));
+	}
+	
+	
+	if ( ( GEN%Small_Timer==0 ) & (sum(p1.getValue("L")) < 100) &  ( GEN>=Start_INC ) )
+	{///// Adding back value to enviroment / regrowth of population
 		
-			p1.defineSpatialMap("map1", "xy", c(10, 10), Li, interpolate=T,valueRange=c(0.0, 1.0), colors=c("black", "white"));
-			p1.setValue("L", Li);
-			print(matrix(Li,10,10));
-			
-		}
-
-
-
-
+		REPZ=p1.getValue("REP");
+		p1.setValue("SHUT_GRIDS",RGSV[LAYERS[REPZ]:99]);
+		SHUT_GRIDS=p1.getValue("SHUT_GRIDS");
+		Li = p1.getValue("L");
+		
+		Li[SHUT_GRIDS]=Li[SHUT_GRIDS] + decrease_amount;
+		Onez=which(Li>0.9);
+		Li[Onez]=1;
+		Li=matrix(Li,10,10);
+		
+		
+		
+		p1.defineSpatialMap("map1", "xy", c(10, 10), Li, interpolate=T,valueRange=c(0.0, 1.0), colors=c("black", "white"));
+		p1.setValue("L", Li);
+//		print(matrix(Li,10,10));
+	
+	}
+	
+	
+	
+	
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-	if ( (GEN>=0 & GEN%5000==0)     |     ( (GEN>=Start_DEC) & (GEN%2==0) & (GEN<=(Start_INC)) )   |    (  (GEN>=Start_DEC-10000) & (GEN<=Start_DEC) & (GEN%100==0) )     |     (  (GEN<=Start_INC+10000) & (GEN>=Start_INC) & (GEN%100==0)  ))
+	
+	
+	if ( (GEN>=0 & GEN%10000==0)     |     ( (GEN>=Start_DEC-100) & (GEN%2==0) & (GEN<=(Start_INC)+100) )   |    (  (GEN>Start_INC+100) & (GEN%100==0) ))
 	{////when to make matrics
 		
 		
 		//// Output Metrics in files
 		//////////////////////////////
-
-
+		
+		
 		///// Output generation, population size, Mean enviroment felt, enviroment remaining
 		RES=mean(p1.spatialMapValue("map1", p1.individuals.spatialPosition)); /// calc mean env effect
 		
 		writeFile(OUT_NAME+'_timeline.txt',paste(c(asString(GEN),asString(p1.individualCount),asString(RES),sum(p1.getValue("L"))),'\t'),append=T); /////write it out in our file
-			
+		
 		//// Output Stats for grid calculations
 		Kgrid_outLine=c(sim.generation+"\t"+ paste(p1.getValue("L"),sep="_"));
 		writeFile(OUT_NAME+'.Kgrid',Kgrid_outLine,append=T);
@@ -509,38 +509,37 @@ early() {
 		ALLPOS=NULL;
 		
 		for (INDHERE in p1.individuals){ /// costly in time
-		ALLPOS=c(ALLPOS,paste(c(asString(GEN),asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'));	
+			ALLPOS=c(ALLPOS,paste(c(asString(GEN),asString(INDHERE.index),asString(INDHERE.spatialPosition),asString(p1.spatialMapValue("map1",INDHERE.spatialPosition))),'\t'));
 		}
 		writeFile(OUT_NAME+'.all_pos',paste(ALLPOS,'\n'),append=T);
-
-
-
-		
+	
+	
+	
+	
 	}////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-    ///// Print out stats
+	
+	
+	///// Print out stats
 	if (GEN % 500 == 0){
 		print(paste(c('Population Size: ',p1.individualCount),'\t'));
 		print(paste(c('Generation: ',sim.generation),'\t'));
 		print(clock());
 		print(date());
-		}
+	}
 	
-	
-	//// When to terminate and output final tree
-	if( GEN >= (asInteger(TERMINATION)+asInteger(Start_INC)) ){
-		sim.treeSeqOutput(OUT_NAME+".trees");
-		sim.simulationFinished();
-	}	
-	
-	
-	
+
+
 }//// Finito
 
-500000 late() 
+//// schedule final state 1000 generations after increase starts
+1 {
+	sim.rescheduleScriptBlock(s0, start=asInteger(Start_INC)+1000, end=asInteger(Start_INC)+1000);
+}
+
+s0 1000000 late()
 {////maximum reach of simulation, if it does not terminate
-sim.treeSeqOutput(OUT_NAME+".trees");
-sim.simulationFinished();
+	print("simulation finished at "+sim.generation+" with N="+p1.individualCount);
+	sim.treeSeqOutput(OUT_NAME+".trees");
+	sim.simulationFinished();
 }
 
